@@ -90,8 +90,9 @@ export class StateBatchSubmitter extends BatchSubmitter {
   }
 
   public async _getBatchStartAndEnd(): Promise<Range> {
+    // TODO: Remove BLOCK_OFFSET by adding a tx to Geth's genesis
     const startBlock: number =
-      (await this.chainContract.getTotalElements()).toNumber() + BLOCK_OFFSET // TODO: Remove BLOCK_OFFSET by adding a tx to Geth's genesis
+      (await this.chainContract.getTotalElements()).toNumber() + BLOCK_OFFSET
     // We will submit state roots for txs which have been in the tx chain for a while.
     const callBlockNumber: number =
       (await this.signer.provider.getBlockNumber()) - this.finalityConfirmations

@@ -56,7 +56,7 @@ describe('TransactionBatchSubmitter', () => {
   let signer: Signer
   let sequencer: Signer
   before(async () => {
-    ;[signer, sequencer] = await ethers.getSigners()
+    ; [signer, sequencer] = await ethers.getSigners()
   })
 
   let AddressManager: Contract

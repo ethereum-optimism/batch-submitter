@@ -1,8 +1,6 @@
 {
   "extends": [
-    "tslint:latest",
-    "tslint-config-prettier",
-    "tslint-plugin-prettier"
+    "tslint:latest"
   ],
   "rulesDirectory": [
     "tslint-no-focused-test"
@@ -21,14 +19,15 @@
     "no-unused-expression": false,
     "object-literal-sort-keys": false,
     "ordered-imports": false,
-    "prettier": true,
     "semicolon": false,
     "variable-name": false,
-    "no-focused-test": true
+    "no-focused-test": true,
+    "quotemark": [true, "single"],
+    "trailing-comma": false
   },
   "linterOptions": {
     "exclude": [
-      "**/node_modules/**/*"
+      "node_modules/**/*"
     ]
-  } 
+  }
 }
