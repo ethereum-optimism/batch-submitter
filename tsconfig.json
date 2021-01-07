@@ -1,7 +1,9 @@
 {
   "compilerOptions": {
+    "outDir": "./build",
     "module": "commonjs",
     "target": "es2017",
+    "resolveJsonModule": true,
     "declaration": true,
     "noImplicitAny": false,
     "removeComments": true,
@@ -17,5 +19,6 @@
     "typeRoots": [
       "node_modules/@types"
     ]
-  }
+  },
+  "include": ["*.ts", "**/*.ts"]
 }
