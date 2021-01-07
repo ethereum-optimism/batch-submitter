@@ -21,7 +21,7 @@ jobs:
           git clone https://github.com/ethereum-optimism/optimism-integration.git \
               $HOME/optimism-integration
           cd $HOME/optimism-integration
-          perl -i -p -e 's|https://(.*?)/|git@\1:|g' .gitmodules
+          sed -i -Ee's#git@github.com:([^/]*)/(.*).git#https://github.com/\1/\2.git#' .gitmodules
           git submodule init
           git submodule update
           if [ -z $GITHUB_HEAD_REF ]; then
