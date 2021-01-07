@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "outDir": "./build",
+    "outDir": "build",
     "module": "commonjs",
     "target": "es2017",
     "resolveJsonModule": true,
@@ -11,7 +11,6 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "sourceMap": true,
-    "outDir": "dist",
     "lib": [
       "es7"
     ],
