@@ -180,12 +180,12 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     startBlock: number,
     endBlock: number
   ): Promise<TransactionReceipt> {
-    const batchParams = await this._generateSequencerBatchParams(
+    const [batchParams, wasBatchTruncated] = await this._generateSequencerBatchParams(
       startBlock,
       endBlock
     )
     const batchSizeInBytes = encodeAppendSequencerBatch(batchParams).length * 2
-    if (!this._shouldSubmitBatch(batchSizeInBytes)) {
+    if (!wasBatchTruncated && !this._shouldSubmitBatch(batchSizeInBytes)) {
       return
     }
     this.log.debug('Submitting batch. Tx calldata:', batchParams)
@@ -202,7 +202,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
   private async _generateSequencerBatchParams(
     startBlock: number,
     endBlock: number
-  ): Promise<AppendSequencerBatchParams> {
+  ): Promise<[AppendSequencerBatchParams, boolean]> {
     // Get all L2 BatchElements for the given range
     // For now we need to update our internal `lastL1BlockNumber` value
     // which is used when submitting batches.
@@ -215,6 +215,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       startBlock,
       batch
     )
+    let wasBatchTruncated = false
     let encoded = encodeAppendSequencerBatch(sequencerBatchParams)
     while (encoded.length / 2 > this.maxTxSize) {
       batch.splice(Math.ceil((batch.length * 2) / 3)) // Delete 1/3rd of all of the batch elements
@@ -223,8 +224,9 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
         batch
       )
       encoded = encodeAppendSequencerBatch(sequencerBatchParams)
+      wasBatchTruncated = true
     }
-    return sequencerBatchParams
+    return [sequencerBatchParams, wasBatchTruncated]
   }
 
   private async _getSequencerBatchParams(
