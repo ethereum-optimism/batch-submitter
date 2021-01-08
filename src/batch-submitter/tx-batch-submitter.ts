@@ -48,8 +48,8 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     minTxSize: number,
     maxTxSize: number,
     maxBatchSize: number,
+    maxBatchSubmissionTime: number,
     numConfirmations: number,
-    finalityConfirmations: number,
     pullFromAddressManager: boolean,
     log: Logger,
     disableQueueBatchAppend: boolean
@@ -60,8 +60,9 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       minTxSize,
       maxTxSize,
       maxBatchSize,
+      maxBatchSubmissionTime,
       numConfirmations,
-      finalityConfirmations,
+      numConfirmations,
       pullFromAddressManager,
       log
     )
@@ -183,6 +184,10 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       startBlock,
       endBlock
     )
+    const batchSizeInBytes = encodeAppendSequencerBatch(batchParams).length * 2
+    if (!this._shouldSubmitBatch(batchSizeInBytes)) {
+      return
+    }
     this.log.debug('Submitting batch. Tx calldata:', batchParams)
     return this._submitAndLogTx(
       this.chainContract.appendSequencerBatch(batchParams),

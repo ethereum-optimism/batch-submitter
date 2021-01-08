@@ -25,6 +25,7 @@ export class StateBatchSubmitter extends BatchSubmitter {
     minTxSize: number,
     maxTxSize: number,
     maxBatchSize: number,
+    maxBatchSubmissionTime: number,
     numConfirmations: number,
     finalityConfirmations: number,
     pullFromAddressManager: boolean,
@@ -37,6 +38,7 @@ export class StateBatchSubmitter extends BatchSubmitter {
       minTxSize,
       maxTxSize,
       maxBatchSize,
+      maxBatchSubmissionTime,
       numConfirmations,
       finalityConfirmations,
       pullFromAddressManager,
@@ -128,11 +130,12 @@ export class StateBatchSubmitter extends BatchSubmitter {
       'appendStateBatch',
       [batch, startBlock]
     )
-    if (tx.length < this.minTxSize) {
-      this.log.info('State batch too small. Skipping batch submission...')
+    if (!this._shouldSubmitBatch(tx.length * 2)) {
       return
     }
+
     const offsetStartsAtIndex = startBlock - BLOCK_OFFSET // TODO: Remove BLOCK_OFFSET by adding a tx to Geth's genesis
+    this.log.debug('Submitting batch. Tx:', tx)
     return this._submitAndLogTx(
       this.chainContract.appendStateBatch(batch, offsetStartsAtIndex),
       'Submitted state root batch!'

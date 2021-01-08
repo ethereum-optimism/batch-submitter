@@ -29,6 +29,7 @@ interface RequiredEnvVars {
   MIN_TX_SIZE: 'MIN_TX_SIZE'
   MAX_TX_SIZE: 'MAX_TX_SIZE'
   MAX_BATCH_SIZE: 'MAX_BATCH_SIZE'
+  MAX_BATCH_SUBMISSION_TIME: 'MAX_BATCH_SUBMISSION_TIME'
   POLL_INTERVAL: 'POLL_INTERVAL'
   NUM_CONFIRMATIONS: 'NUM_CONFIRMATIONS'
   FINALITY_CONFIRMATIONS: 'FINALITY_CONFIRMATIONS'
@@ -42,6 +43,7 @@ const requiredEnvVars: RequiredEnvVars = {
   MIN_TX_SIZE: 'MIN_TX_SIZE',
   MAX_TX_SIZE: 'MAX_TX_SIZE',
   MAX_BATCH_SIZE: 'MAX_BATCH_SIZE',
+  MAX_BATCH_SUBMISSION_TIME: 'MAX_BATCH_SUBMISSION_TIME',
   POLL_INTERVAL: 'POLL_INTERVAL',
   NUM_CONFIRMATIONS: 'NUM_CONFIRMATIONS',
   FINALITY_CONFIRMATIONS: 'FINALITY_CONFIRMATIONS',
@@ -81,7 +83,7 @@ export const run = async () => {
     parseInt(requiredEnvVars.MIN_TX_SIZE, 10),
     parseInt(requiredEnvVars.MAX_TX_SIZE, 10),
     parseInt(requiredEnvVars.MAX_BATCH_SIZE, 10),
-    parseInt(requiredEnvVars.NUM_CONFIRMATIONS, 10),
+    parseInt(requiredEnvVars.MAX_BATCH_SUBMISSION_TIME, 10),
     parseInt(requiredEnvVars.NUM_CONFIRMATIONS, 10),
     true,
     getLogger(TX_BATCH_SUBMITTER_LOG_TAG),
@@ -94,6 +96,7 @@ export const run = async () => {
     parseInt(requiredEnvVars.MIN_TX_SIZE, 10),
     parseInt(requiredEnvVars.MAX_TX_SIZE, 10),
     parseInt(requiredEnvVars.MAX_BATCH_SIZE, 10),
+    parseInt(requiredEnvVars.MAX_BATCH_SUBMISSION_TIME, 10),
     parseInt(requiredEnvVars.NUM_CONFIRMATIONS, 10),
     parseInt(requiredEnvVars.FINALITY_CONFIRMATIONS, 10),
     true,
