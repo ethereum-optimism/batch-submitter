@@ -114,9 +114,7 @@ export abstract class BatchSubmitter {
     batchSizeInBytes: number
   ): boolean {
     const isTimeoutReached = this.lastBatchSubmissionTimestamp + this.maxBatchSubmissionTime <= Date.now()
-    if (
-      batchSizeInBytes < this.minTxSize
-    ) {
+    if (batchSizeInBytes < this.minTxSize) {
       if (!isTimeoutReached) {
         this.log.info(`Batch is too small & max submission timeout not reached. Skipping batch submission...`)
         return false
