@@ -96,7 +96,7 @@ export const run = async () => {
     parseInt(requiredEnvVars.MIN_TX_SIZE, 10),
     parseInt(requiredEnvVars.MAX_TX_SIZE, 10),
     parseInt(requiredEnvVars.MAX_BATCH_SIZE, 10),
-    parseInt(requiredEnvVars.MAX_BATCH_SUBMISSION_TIME, 10),
+    parseInt(requiredEnvVars.MAX_BATCH_SUBMISSION_TIME, 10) * 1_000,
     parseInt(requiredEnvVars.NUM_CONFIRMATIONS, 10),
     parseInt(requiredEnvVars.FINALITY_CONFIRMATIONS, 10),
     true,

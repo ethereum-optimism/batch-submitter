@@ -35,7 +35,7 @@ export abstract class BatchSubmitter {
   protected chainContract: Contract
   protected l2ChainId: number
   protected syncing: boolean
-  protected lastBatchSubmissionTimestamp: number
+  protected lastBatchSubmissionTimestamp: number = 0
 
   constructor(
     readonly signer: Signer,
@@ -113,7 +113,7 @@ export abstract class BatchSubmitter {
   protected _shouldSubmitBatch(
     batchSizeInBytes: number
   ): boolean {
-    const isTimeoutReached = this.lastBatchSubmissionTimestamp + this.maxBatchSubmissionTime * 1_000 < Date.now()
+    const isTimeoutReached = this.lastBatchSubmissionTimestamp + this.maxBatchSubmissionTime <= Date.now()
     if (
       batchSizeInBytes < this.minTxSize
     ) {
