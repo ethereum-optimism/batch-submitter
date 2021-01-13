@@ -9,7 +9,7 @@ import {
   getContractFactory,
 } from '@eth-optimism/contracts'
 import { OptimismProvider } from '@eth-optimism/provider'
-import { Logger } from '@eth-optimism/core-utils'
+import { Logger, remove0x } from '@eth-optimism/core-utils'
 
 /* Internal Imports */
 import {
@@ -184,7 +184,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       startBlock,
       endBlock
     )
-    const batchSizeInBytes = encodeAppendSequencerBatch(batchParams).length * 2
+    const batchSizeInBytes = remove0x(encodeAppendSequencerBatch(batchParams)).length / 2
     if (!wasBatchTruncated && !this._shouldSubmitBatch(batchSizeInBytes)) {
       return
     }

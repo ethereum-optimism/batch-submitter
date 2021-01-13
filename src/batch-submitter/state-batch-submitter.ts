@@ -2,7 +2,7 @@
 import { TransactionReceipt } from '@ethersproject/abstract-provider'
 import { getContractFactory } from '@eth-optimism/contracts'
 import { Contract, Signer, ethers } from 'ethers'
-import { Logger } from '@eth-optimism/core-utils'
+import { Logger, remove0x } from '@eth-optimism/core-utils'
 import { OptimismProvider } from '@eth-optimism/provider'
 
 /* Internal Imports */
@@ -130,7 +130,7 @@ export class StateBatchSubmitter extends BatchSubmitter {
       'appendStateBatch',
       [batch, startBlock]
     )
-    if (!this._shouldSubmitBatch(tx.length * 2)) {
+    if (!this._shouldSubmitBatch(remove0x(tx.length) / 2)) {
       return
     }
 
