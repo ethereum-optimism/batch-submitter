@@ -23,8 +23,6 @@ import {
 const log = getLogger('oe:batch-submitter:init')
 
 interface RequiredEnvVars {
-  // The private key that will be used to submit tx and state batches.
-  SEQUENCER_PRIVATE_KEY: 'SEQUENCER_PRIVATE_KEY'
   // The HTTP provider URL for L1.
   L1_NODE_WEB3_URL: 'L1_NODE_WEB3_URL'
   // The HTTP provider URL for L2.
@@ -49,7 +47,6 @@ interface RequiredEnvVars {
   RUN_STATE_BATCH_SUBMITTER: 'true' | 'false' | 'RUN_STATE_BATCH_SUBMITTER'
 }
 const requiredEnvVars: RequiredEnvVars = {
-  SEQUENCER_PRIVATE_KEY: 'SEQUENCER_PRIVATE_KEY',
   L1_NODE_WEB3_URL: 'L1_NODE_WEB3_URL',
   L2_NODE_WEB3_URL: 'L2_NODE_WEB3_URL',
   MIN_TX_SIZE: 'MIN_TX_SIZE',
@@ -62,10 +59,20 @@ const requiredEnvVars: RequiredEnvVars = {
   RUN_TX_BATCH_SUBMITTER: 'RUN_TX_BATCH_SUBMITTER',
   RUN_STATE_BATCH_SUBMITTER: 'RUN_STATE_BATCH_SUBMITTER',
 }
+
 /* Optional Env Vars
  * FRAUD_SUBMISSION_ADDRESS
  * DISABLE_QUEUE_BATCH_APPEND
+ * SEQUENCER_PRIVATE_KEY
+ * MNEMONIC
  */
+const env = process.env
+const FRAUD_SUBMISSION_ADDRESS = env.FRAUD_SUBMISSION_ADDRESS || 'no fraud'
+const DISABLE_QUEUE_BATCH_APPEND = !!env.DISABLE_QUEUE_BATCH_APPEND
+// The private key that will be used to submit tx and state batches.
+const SEQUENCER_PRIVATE_KEY = env.SEQUENCER_PRIVATE_KEY
+const MNEMONIC = env.MNEMONIC
+const HD_PATH = env.HD_PATH
 
 export const run = async () => {
   log.info('Starting batch submitter...')
@@ -84,10 +91,18 @@ export const run = async () => {
   const l2Provider: OptimismProvider = new OptimismProvider(
     requiredEnvVars.L2_NODE_WEB3_URL
   )
-  const sequencerSigner: Signer = new Wallet(
-    requiredEnvVars.SEQUENCER_PRIVATE_KEY,
-    l1Provider
-  )
+
+  let sequencerSigner: Signer
+  if (SEQUENCER_PRIVATE_KEY) {
+    sequencerSigner = new Wallet(
+      SEQUENCER_PRIVATE_KEY,
+      l1Provider
+    )
+  } else if (MNEMONIC) {
+    sequencerSigner = Wallet.fromMnemonic(MNEMONIC, HD_PATH)
+  } else {
+    throw new Error('Must pass one of SEQUENCER_PRIVATE_KEY or MNEMONIC')
+  }
 
   const address = await sequencerSigner.getAddress()
   log.info(`Using sequencer address: ${address}`)
@@ -102,7 +117,7 @@ export const run = async () => {
     parseInt(requiredEnvVars.NUM_CONFIRMATIONS, 10),
     true,
     getLogger(TX_BATCH_SUBMITTER_LOG_TAG),
-    !!process.env.DISABLE_QUEUE_BATCH_APPEND
+    DISABLE_QUEUE_BATCH_APPEND
   )
 
   const stateBatchSubmitter = new StateBatchSubmitter(
@@ -116,7 +131,7 @@ export const run = async () => {
     parseInt(requiredEnvVars.FINALITY_CONFIRMATIONS, 10),
     true,
     getLogger(STATE_BATCH_SUBMITTER_LOG_TAG),
-    process.env.FRAUD_SUBMISSION_ADDRESS || 'no fraud'
+    FRAUD_SUBMISSION_ADDRESS
   )
 
   // Loops infinitely!
