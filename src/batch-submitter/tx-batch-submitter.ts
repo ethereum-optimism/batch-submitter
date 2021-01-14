@@ -224,6 +224,9 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
         batch
       )
       encoded = encodeAppendSequencerBatch(sequencerBatchParams)
+      //  This is to prevent against the case where a batch is oversized,
+      //  but then gets truncated to the point where it is under the minimum size.
+      //  In this case, we want to submit regardless of the batch's size.
       wasBatchTruncated = true
     }
     return [sequencerBatchParams, wasBatchTruncated]
