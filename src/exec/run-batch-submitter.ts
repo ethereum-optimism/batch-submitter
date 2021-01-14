@@ -75,6 +75,9 @@ export const run = async () => {
     l1Provider
   )
 
+  const address = await sequencerSigner.getAddress()
+  log.info(`Using sequencer address: ${address}`)
+
   const txBatchSubmitter = new TransactionBatchSubmitter(
     sequencerSigner,
     l2Provider,
