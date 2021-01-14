@@ -39,7 +39,7 @@ interface RequiredEnvVars {
   MAX_BATCH_SIZE: 'MAX_BATCH_SIZE'
   // The maximum amount of time (seconds) that we will wait before submitting an under-sized batch.
   MAX_BATCH_SUBMISSION_TIME: 'MAX_BATCH_SUBMISSION_TIME'
-  // The delay in seconds between querying L2 for more transactions / to create a new batch.
+  // The delay in milliseconds between querying L2 for more transactions / to create a new batch.
   POLL_INTERVAL: 'POLL_INTERVAL'
   // The number of confirmations which we will wait after appending new batches.
   NUM_CONFIRMATIONS: 'NUM_CONFIRMATIONS'
