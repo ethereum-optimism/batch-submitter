@@ -35,6 +35,7 @@ export abstract class BatchSubmitter {
   protected chainContract: Contract
   protected l2ChainId: number
   protected syncing: boolean
+  protected lastBatchSubmissionTimestamp: number = 0
 
   constructor(
     readonly signer: Signer,
@@ -42,6 +43,7 @@ export abstract class BatchSubmitter {
     readonly minTxSize: number,
     readonly maxTxSize: number,
     readonly maxBatchSize: number,
+    readonly maxBatchSubmissionTime: number,
     readonly numConfirmations: number,
     readonly finalityConfirmations: number,
     readonly pullFromAddressManager: boolean,
@@ -108,11 +110,26 @@ export abstract class BatchSubmitter {
     }
   }
 
+  protected _shouldSubmitBatch(
+    batchSizeInBytes: number
+  ): boolean {
+    const isTimeoutReached = this.lastBatchSubmissionTimestamp + this.maxBatchSubmissionTime <= Date.now()
+    if (batchSizeInBytes < this.minTxSize) {
+      if (!isTimeoutReached) {
+        this.log.info(`Batch is too small & max submission timeout not reached. Skipping batch submission...`)
+        return false
+      }
+      this.log.info(`Timeout reached.`)
+    }
+    return true
+  }
+
   protected async _submitAndLogTx(
     txPromise: Promise<TransactionResponse>,
     successMessage: string
   ): Promise<TransactionReceipt> {
     const response = await txPromise
+    this.lastBatchSubmissionTimestamp = Date.now()
     this.log.debug('Transaction response:', response)
     this.log.debug('Waiting for receipt...')
     const receipt = await response.wait(this.numConfirmations)

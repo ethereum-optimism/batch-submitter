@@ -150,7 +150,7 @@ describe('TransactionBatchSubmitter', () => {
         MIN_TX_SIZE,
         MAX_TX_SIZE,
         10,
-        1,
+        0,
         1,
         false,
         getLogger(TX_BATCH_SUBMITTER_LOG_TAG),
@@ -237,6 +237,44 @@ describe('TransactionBatchSubmitter', () => {
       expect(parseInt(logData.slice(64 * 0, 64 * 1), 16)).to.equal(0) // _startingQueueIndex
       expect(parseInt(logData.slice(64 * 1, 64 * 2), 16)).to.equal(8) // _numQueueElements
       expect(parseInt(logData.slice(64 * 2, 64 * 3), 16)).to.equal(11) // _totalElements
+    })
+
+    it('should submit a small batch only after the timeout', async () => {
+      l2Provider.setNumBlocksToReturn(2)
+      l2Provider.setL2BlockData({
+        queueOrigin: QueueOrigin.L1ToL2,
+      } as any)
+      const createBatchSubmitter = (timeout: number): TransactionBatchSubmitter => new TransactionBatchSubmitter(
+        sequencer,
+        l2Provider as any,
+        MIN_TX_SIZE,
+        MAX_TX_SIZE,
+        10,
+        timeout,
+        1,
+        false,
+        getLogger(TX_BATCH_SUBMITTER_LOG_TAG),
+        false
+      )
+      // Create a batch submitter with a long timeout & make sure it doesn't submit the batches one after another
+      const longTimeout = 10_000
+      batchSubmitter = createBatchSubmitter(longTimeout)
+      let receipt = await batchSubmitter.submitNextBatch()
+      expect(receipt).to.not.be.undefined
+      receipt = await batchSubmitter.submitNextBatch()
+      // The receipt should be undefined because that means it didn't submit
+      expect(receipt).to.be.undefined
+
+      // This time create a batch submitter with a short timeout & it should submit batches after the timeout is reached
+      const shortTimeout = 5
+      batchSubmitter = createBatchSubmitter(shortTimeout)
+      receipt = await batchSubmitter.submitNextBatch()
+      expect(receipt).to.not.be.undefined
+      // Sleep for the short timeout
+      await new Promise((r) => setTimeout(r, shortTimeout))
+      receipt = await batchSubmitter.submitNextBatch()
+      // The receipt should NOT be undefined because that means it successfully submitted!
+      expect(receipt).to.not.be.undefined
     })
   })
 })
