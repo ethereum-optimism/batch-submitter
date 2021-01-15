@@ -166,7 +166,8 @@ export abstract class BatchSubmitter {
         to: response.to,
         data: response.data,
         nonce: response.nonce,
-        value: 0
+        value: response.value,
+        gasLimit: response.gasLimit,
       }
       const newRes = await signer.sendTransaction(tx)
       log.debug('Resubmission tx response:', newRes)
