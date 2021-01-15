@@ -51,6 +51,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     maxBatchSubmissionTime: number,
     numConfirmations: number,
     pullFromAddressManager: boolean,
+    minBalanceEther: number,
     log: Logger,
     disableQueueBatchAppend: boolean
   ) {
@@ -64,6 +65,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       numConfirmations,
       numConfirmations,
       pullFromAddressManager,
+      minBalanceEther,
       log
     )
     this.disableQueueBatchAppend = disableQueueBatchAppend

@@ -1,5 +1,5 @@
 /* External Imports */
-import { Contract, Signer } from 'ethers'
+import { Contract, Signer, utils } from 'ethers'
 import {
   TransactionResponse,
   TransactionReceipt,
@@ -47,6 +47,7 @@ export abstract class BatchSubmitter {
     readonly numConfirmations: number,
     readonly finalityConfirmations: number,
     readonly pullFromAddressManager: boolean,
+    readonly minBalanceEther: number,
     readonly log: Logger
   ) {}
 
@@ -63,6 +64,7 @@ export abstract class BatchSubmitter {
       this.l2ChainId = await this._getL2ChainId()
     }
     await this._updateChainInfo()
+    await this._checkBalance()
 
     if (this.syncing === true) {
       this.log.info(
@@ -76,6 +78,18 @@ export abstract class BatchSubmitter {
     }
 
     return this._submitBatch(range.start, range.end)
+  }
+
+  protected async _checkBalance(): Promise<void> {
+    const address = await this.signer.getAddress()
+    const balance = await this.signer.getBalance()
+    const ether = utils.formatEther(balance)
+    const num = parseFloat(ether)
+
+    this.log.info(`Balance ${address}: ${balance} ether`)
+    if (num < this.minBalanceEther) {
+      this.log.error(`Current balance of ${num} lower than min safe balance of ${this.minBalanceEther}`)
+    }
   }
 
   protected async _getRollupInfo(): Promise<RollupInfo> {

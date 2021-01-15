@@ -45,6 +45,9 @@ interface RequiredEnvVars {
   RUN_TX_BATCH_SUBMITTER: 'true' | 'false' | 'RUN_TX_BATCH_SUBMITTER'
   // Whether or not to run the state batch submitter.
   RUN_STATE_BATCH_SUBMITTER: 'true' | 'false' | 'RUN_STATE_BATCH_SUBMITTER'
+  // The safe minimum amount of ether the batch submitter key should
+  // hold before it starts to log errors.
+  SAFE_MINIMUM_ETHER_BALANCE: 'SAFE_MINIMUM_ETHER_BALANCE'
 }
 const requiredEnvVars: RequiredEnvVars = {
   L1_NODE_WEB3_URL: 'L1_NODE_WEB3_URL',
@@ -58,6 +61,7 @@ const requiredEnvVars: RequiredEnvVars = {
   FINALITY_CONFIRMATIONS: 'FINALITY_CONFIRMATIONS',
   RUN_TX_BATCH_SUBMITTER: 'RUN_TX_BATCH_SUBMITTER',
   RUN_STATE_BATCH_SUBMITTER: 'RUN_STATE_BATCH_SUBMITTER',
+  SAFE_MINIMUM_ETHER_BALANCE: 'SAFE_MINIMUM_ETHER_BALANCE',
 }
 
 /* Optional Env Vars
@@ -116,6 +120,7 @@ export const run = async () => {
     parseInt(requiredEnvVars.MAX_BATCH_SUBMISSION_TIME, 10),
     parseInt(requiredEnvVars.NUM_CONFIRMATIONS, 10),
     true,
+    parseFloat(requiredEnvVars.SAFE_MINIMUM_ETHER_BALANCE),
     getLogger(TX_BATCH_SUBMITTER_LOG_TAG),
     DISABLE_QUEUE_BATCH_APPEND
   )
@@ -130,6 +135,7 @@ export const run = async () => {
     parseInt(requiredEnvVars.NUM_CONFIRMATIONS, 10),
     parseInt(requiredEnvVars.FINALITY_CONFIRMATIONS, 10),
     true,
+    parseFloat(requiredEnvVars.SAFE_MINIMUM_ETHER_BALANCE),
     getLogger(STATE_BATCH_SUBMITTER_LOG_TAG),
     FRAUD_SUBMISSION_ADDRESS
   )
