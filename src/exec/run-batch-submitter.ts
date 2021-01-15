@@ -14,6 +14,7 @@ config()
 /* Internal Imports */
 import {
   TransactionBatchSubmitter,
+  BatchSubmitter,
   StateBatchSubmitter,
   STATE_BATCH_SUBMITTER_LOG_TAG,
   TX_BATCH_SUBMITTER_LOG_TAG,
@@ -39,6 +40,8 @@ interface RequiredEnvVars {
   POLL_INTERVAL: 'POLL_INTERVAL'
   // The number of confirmations which we will wait after appending new batches.
   NUM_CONFIRMATIONS: 'NUM_CONFIRMATIONS'
+  // The number of seconds to wait before resubmitting a transaction.
+  RESUBMISSION_TIMEOUT: 'RESUBMISSION_TIMEOUT'
   // The number of confirmations that we should wait before submitting state roots for CTC elements.
   FINALITY_CONFIRMATIONS: 'FINALITY_CONFIRMATIONS'
   // Whether or not to run the tx batch submitter.
@@ -58,6 +61,7 @@ const requiredEnvVars: RequiredEnvVars = {
   MAX_BATCH_SUBMISSION_TIME: 'MAX_BATCH_SUBMISSION_TIME',
   POLL_INTERVAL: 'POLL_INTERVAL',
   NUM_CONFIRMATIONS: 'NUM_CONFIRMATIONS',
+  RESUBMISSION_TIMEOUT: 'RESUBMISSION_TIMEOUT',
   FINALITY_CONFIRMATIONS: 'FINALITY_CONFIRMATIONS',
   RUN_TX_BATCH_SUBMITTER: 'RUN_TX_BATCH_SUBMITTER',
   RUN_STATE_BATCH_SUBMITTER: 'RUN_STATE_BATCH_SUBMITTER',
@@ -119,6 +123,7 @@ export const run = async () => {
     parseInt(requiredEnvVars.MAX_BATCH_SIZE, 10),
     parseInt(requiredEnvVars.MAX_BATCH_SUBMISSION_TIME, 10),
     parseInt(requiredEnvVars.NUM_CONFIRMATIONS, 10),
+    parseInt(requiredEnvVars.RESUBMISSION_TIMEOUT, 10) * 1_000,
     true,
     parseFloat(requiredEnvVars.SAFE_MINIMUM_ETHER_BALANCE),
     getLogger(TX_BATCH_SUBMITTER_LOG_TAG),
@@ -133,6 +138,7 @@ export const run = async () => {
     parseInt(requiredEnvVars.MAX_BATCH_SIZE, 10),
     parseInt(requiredEnvVars.MAX_BATCH_SUBMISSION_TIME, 10) * 1_000,
     parseInt(requiredEnvVars.NUM_CONFIRMATIONS, 10),
+    parseInt(requiredEnvVars.RESUBMISSION_TIMEOUT, 10) * 1_000,
     parseInt(requiredEnvVars.FINALITY_CONFIRMATIONS, 10),
     true,
     parseFloat(requiredEnvVars.SAFE_MINIMUM_ETHER_BALANCE),
@@ -144,6 +150,27 @@ export const run = async () => {
   const loop = async (
     func: () => Promise<TransactionReceipt>
   ): Promise<void> => {
+    // Clear all pending transactions
+    const pendingTxs = await sequencerSigner.getTransactionCount('pending')
+    const latestTxs = await sequencerSigner.getTransactionCount('latest')
+    if (pendingTxs > latestTxs) {
+      log.info('Detected pending transactions. Clearing all transactions!')
+      for (let i = latestTxs; i < pendingTxs; i++) {
+        const response = await sequencerSigner.sendTransaction({
+          to: await sequencerSigner.getAddress(),
+          value: 0
+        })
+        await BatchSubmitter.getReceiptWithResubmission(
+          response,
+          [],
+          sequencerSigner,
+          parseInt(requiredEnvVars.NUM_CONFIRMATIONS, 10),
+          60 * 1_000,  // Attempt resubmission every 60 seconds
+          log,
+        )
+      }
+    }
+
     while (true) {
       try {
         await func()
