@@ -161,7 +161,8 @@ export abstract class BatchSubmitter {
     const val = await bPromise.any(promises)
 
     if (val === 'resubmit') {
-      log.debug('Tx resubmission timeout reached. Resubmitting tx.')
+      log.debug(`Tx resubmission timeout reached for hash: ${response.hash}; nonce: ${response.nonce}.
+                Resubmitting tx...`)
       const tx = {
         to: response.to,
         data: response.data,
