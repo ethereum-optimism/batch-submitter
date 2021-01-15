@@ -158,7 +158,8 @@ export const run = async () => {
       for (let i = latestTxs; i < pendingTxs; i++) {
         const response = await sequencerSigner.sendTransaction({
           to: await sequencerSigner.getAddress(),
-          value: 0
+          value: 0,
+          nonce: i,
         })
         await BatchSubmitter.getReceiptWithResubmission(
           response,
