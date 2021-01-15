@@ -153,6 +153,7 @@ describe('TransactionBatchSubmitter', () => {
         0,
         1,
         false,
+        1,
         getLogger(TX_BATCH_SUBMITTER_LOG_TAG),
         false
       )
