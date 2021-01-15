@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.1.2
+
+Adds mnemonic config parsing
+
 ## v0.1.1
 
 Final fixes before minnet release.
