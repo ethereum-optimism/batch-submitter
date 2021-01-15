@@ -161,6 +161,7 @@ export const run = async () => {
           value: 0,
           nonce: i,
         })
+        log.info(`Submitting transaction with nonce: ${i}; hash: ${response.hash}`)
         await BatchSubmitter.getReceiptWithResubmission(
           response,
           [],

@@ -88,7 +88,7 @@ export abstract class BatchSubmitter {
     const ether = utils.formatEther(balance)
     const num = parseFloat(ether)
 
-    this.log.info(`Balance ${address}: ${balance} ether`)
+    this.log.info(`Balance ${address}: ${ether} ether`)
     if (num < this.minBalanceEther) {
       this.log.error(`Current balance of ${num} lower than min safe balance of ${this.minBalanceEther}`)
     }
