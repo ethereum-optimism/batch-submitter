@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.1.3
+
+- Add tx resubmission logic
+- Log when the batch submitter runs low on ETH
+
 ## v0.1.2
 
 Adds mnemonic config parsing
