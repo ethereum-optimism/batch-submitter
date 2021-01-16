@@ -50,6 +50,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     maxBatchSize: number,
     maxBatchSubmissionTime: number,
     numConfirmations: number,
+    resubmissionTimeout: number,
     pullFromAddressManager: boolean,
     minBalanceEther: number,
     log: Logger,
@@ -63,7 +64,8 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       maxBatchSize,
       maxBatchSubmissionTime,
       numConfirmations,
-      numConfirmations,
+      resubmissionTimeout,
+      0,  // Supply dummy value because it is not used.
       pullFromAddressManager,
       minBalanceEther,
       log

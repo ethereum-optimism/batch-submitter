@@ -4,6 +4,7 @@ import {
   TransactionResponse,
   TransactionReceipt,
 } from '@ethersproject/abstract-provider'
+import { Promise as bPromise } from 'bluebird'
 import { Logger } from '@eth-optimism/core-utils'
 import { OptimismProvider } from '@eth-optimism/provider'
 import { getContractFactory } from '@eth-optimism/contracts'
@@ -45,6 +46,7 @@ export abstract class BatchSubmitter {
     readonly maxBatchSize: number,
     readonly maxBatchSubmissionTime: number,
     readonly numConfirmations: number,
+    readonly resubmissionTimeout: number,
     readonly finalityConfirmations: number,
     readonly pullFromAddressManager: boolean,
     readonly minBalanceEther: number,
@@ -86,7 +88,7 @@ export abstract class BatchSubmitter {
     const ether = utils.formatEther(balance)
     const num = parseFloat(ether)
 
-    this.log.info(`Balance ${address}: ${balance} ether`)
+    this.log.info(`Balance ${address}: ${ether} ether`)
     if (num < this.minBalanceEther) {
       this.log.error(`Current balance of ${num} lower than min safe balance of ${this.minBalanceEther}`)
     }
@@ -138,6 +140,51 @@ export abstract class BatchSubmitter {
     return true
   }
 
+  public static async getReceiptWithResubmission(
+    response: TransactionResponse,
+    receiptPromises: Array<Promise<TransactionReceipt>>,
+    signer: Signer,
+    numConfirmations: number,
+    resubmissionTimeout: number,
+    log: Logger,
+  ): Promise<TransactionReceipt> {
+    const receiptPromise = response.wait(numConfirmations)
+    receiptPromises.push(receiptPromise)
+    // Wait for the tx & if it takes too long resubmit
+    const sleepAndReturnResubmit = async (timeout: number) => {
+      await new Promise((r) => setTimeout(r, timeout))
+      return 'resubmit'
+    }
+    const promises = [...receiptPromises, sleepAndReturnResubmit(
+      resubmissionTimeout
+    )]
+    const val = await bPromise.any(promises)
+
+    if (val === 'resubmit') {
+      log.debug(`Tx resubmission timeout reached for hash: ${response.hash}; nonce: ${response.nonce}.
+                Resubmitting tx...`)
+      const tx = {
+        to: response.to,
+        data: response.data,
+        nonce: response.nonce,
+        value: response.value,
+        gasLimit: response.gasLimit,
+      }
+      const newRes = await signer.sendTransaction(tx)
+      log.debug('Resubmission tx response:', newRes)
+      return BatchSubmitter.getReceiptWithResubmission(
+        newRes,
+        receiptPromises,
+        signer,
+        numConfirmations,
+        resubmissionTimeout,
+        log
+      )
+    } else {
+      return val
+    }
+  }
+
   protected async _submitAndLogTx(
     txPromise: Promise<TransactionResponse>,
     successMessage: string
@@ -146,7 +193,14 @@ export abstract class BatchSubmitter {
     this.lastBatchSubmissionTimestamp = Date.now()
     this.log.debug('Transaction response:', response)
     this.log.debug('Waiting for receipt...')
-    const receipt = await response.wait(this.numConfirmations)
+    const receipt = await BatchSubmitter.getReceiptWithResubmission(
+      response,
+      [],
+      this.signer,
+      this.numConfirmations,
+      this.resubmissionTimeout,
+      this.log
+    )
     this.log.debug('Transaction receipt:', receipt)
     this.log.info(successMessage)
     return receipt
