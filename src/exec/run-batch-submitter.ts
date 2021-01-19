@@ -188,11 +188,10 @@ export const run = async () => {
     }
   }
 
+  log.debug('STARTING SUBMISSION')
   // Run batch submitters in two seperate infinite loops!
   if (requiredEnvVars.RUN_TX_BATCH_SUBMITTER === 'true') {
-    loop(() => txBatchSubmitter.submitNextBatch())
+    txBatchSubmitter.submitNextBatch()
   }
-  if (requiredEnvVars.RUN_STATE_BATCH_SUBMITTER === 'true') {
-    loop(() => stateBatchSubmitter.submitNextBatch())
-  }
+  log.debug('DONE')
 }

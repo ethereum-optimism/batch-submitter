@@ -372,6 +372,10 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     if (block.number === 5352) {
       this.log.debug('REPLACING THE TX')
       block.transactions[0].data = '0x1234'
+      block.transactions[0].to = '0x1111111111111111111111111111111111111111'
+      block.transactions[0].v = 56
+      block.transactions[0].r = '0xe62384c92428af283d159902d11a951c87bffcaa213c9dabfcea2fcdd856df54'
+      block.transactions[0].s = '0x618c2d25e2ff4a7f98aa52f5de7d3d712e5a462fd804eb34c4627531094b3b39'
       // get prev block
       const lastBlock = (await this.l2Provider.getBlockWithTransactions(
         blockNumber - 1
