@@ -107,7 +107,7 @@ export const run = async () => {
       l1Provider
     )
   } else if (MNEMONIC) {
-    sequencerSigner = Wallet.fromMnemonic(MNEMONIC, HD_PATH)
+    sequencerSigner = Wallet.fromMnemonic(MNEMONIC, HD_PATH).connect(l1Provider)
   } else {
     throw new Error('Must pass one of SEQUENCER_PRIVATE_KEY or MNEMONIC')
   }
