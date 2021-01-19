@@ -126,7 +126,8 @@ export const run = async () => {
     parseInt(requiredEnvVars.RESUBMISSION_TIMEOUT, 10) * 1_000,
     true,
     parseFloat(requiredEnvVars.SAFE_MINIMUM_ETHER_BALANCE),
-    getLogger(TX_BATCH_SUBMITTER_LOG_TAG),
+    // getLogger(TX_BATCH_SUBMITTER_LOG_TAG),
+    { debug: console.log, error: console.error, info: console.log },
     DISABLE_QUEUE_BATCH_APPEND
   )
 

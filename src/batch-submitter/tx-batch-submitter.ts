@@ -271,6 +271,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       lastTimestamp = block.timestamp
       lastBlockNumber = block.blockNumber
     }
+    this.log.debug('Printing contexts')
     for (const groupedBlock of groupedBlocks) {
       if (
         groupedBlock.sequenced.length === 0 &&
@@ -292,6 +293,15 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
             ? groupedBlock.sequenced[0].blockNumber
             : groupedBlock.queued[0].blockNumber,
       })
+    }
+    let offset = 0
+    for (const context of contexts) {
+      const contextAndStartsAt = {
+        contextAndStartsAt: shouldStartAtIndex + offset,
+        context
+      }
+      offset += context.numSequencedTransactions + context.numSubsequentQueueTransactions
+      this.log.debug(contextAndStartsAt)
     }
 
     // Generate sequencer transactions
@@ -357,6 +367,16 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     // For now just set the l1BlockNumber based on the current l1 block number
     if (!block.transactions[0].l1BlockNumber) {
       block.transactions[0].l1BlockNumber = this.lastL1BlockNumber
+    }
+    // JUST FOR MAINNET. TOOD: REMOVE
+    if (block.number === 5352) {
+      this.log.debug('REPLACING THE TX')
+      block.transactions[0].data = '0x1234'
+      // get prev block
+      const lastBlock = (await this.l2Provider.getBlockWithTransactions(
+        blockNumber - 1
+      )) as L2Block
+      block.transactions[0].l1BlockNumber = lastBlock.transactions[0].l1BlockNumber
     }
     return block
   }
