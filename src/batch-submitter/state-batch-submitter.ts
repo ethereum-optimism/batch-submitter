@@ -119,6 +119,12 @@ export class StateBatchSubmitter extends BatchSubmitter {
       )
       return
     }
+    if (endBlock >= 10600) {
+      return {
+        start: startBlock,
+        end: 10600,
+      }
+    }
     return {
       start: startBlock,
       end: endBlock,
