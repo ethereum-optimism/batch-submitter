@@ -151,26 +151,30 @@ export const run = async () => {
     func: () => Promise<TransactionReceipt>
   ): Promise<void> => {
     // Clear all pending transactions
-    const pendingTxs = await sequencerSigner.getTransactionCount('pending')
-    const latestTxs = await sequencerSigner.getTransactionCount('latest')
-    if (pendingTxs > latestTxs) {
-      log.info('Detected pending transactions. Clearing all transactions!')
-      for (let i = latestTxs; i < pendingTxs; i++) {
-        const response = await sequencerSigner.sendTransaction({
-          to: await sequencerSigner.getAddress(),
-          value: 0,
-          nonce: i,
-        })
-        log.info(`Submitting transaction with nonce: ${i}; hash: ${response.hash}`)
-        await BatchSubmitter.getReceiptWithResubmission(
-          response,
-          [],
-          sequencerSigner,
-          parseInt(requiredEnvVars.NUM_CONFIRMATIONS, 10),
-          60 * 1_000,  // Attempt resubmission every 60 seconds
-          log,
-        )
+    try {
+      const pendingTxs = await sequencerSigner.getTransactionCount('pending')
+      const latestTxs = await sequencerSigner.getTransactionCount('latest')
+      if (pendingTxs > latestTxs) {
+        log.info('Detected pending transactions. Clearing all transactions!')
+        for (let i = latestTxs; i < pendingTxs; i++) {
+          const response = await sequencerSigner.sendTransaction({
+            to: await sequencerSigner.getAddress(),
+            value: 0,
+            nonce: i,
+          })
+          log.info(`Submitting transaction with nonce: ${i}; hash: ${response.hash}`)
+          await BatchSubmitter.getReceiptWithResubmission(
+            response,
+            [],
+            sequencerSigner,
+            parseInt(requiredEnvVars.NUM_CONFIRMATIONS, 10),
+            60 * 1_000,  // Attempt resubmission every 60 seconds
+            log,
+          )
+        }
       }
+    } catch (err) {
+      this.log.error('Cannot clear transactions', err)
     }
 
     while (true) {
