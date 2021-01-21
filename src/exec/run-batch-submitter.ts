@@ -153,6 +153,8 @@ export const run = async () => {
     // Clear all pending transactions
     const pendingTxs = await sequencerSigner.getTransactionCount('pending')
     const latestTxs = await sequencerSigner.getTransactionCount('latest')
+    log.debug(`pending: ${pendingTxs}, latest: ${latestTxs}`)
+
     if (pendingTxs > latestTxs) {
       log.info('Detected pending transactions. Clearing all transactions!')
       for (let i = latestTxs; i < pendingTxs; i++) {

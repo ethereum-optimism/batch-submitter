@@ -68,12 +68,14 @@ export abstract class BatchSubmitter {
     await this._updateChainInfo()
     await this._checkBalance()
 
+    /*
     if (this.syncing === true) {
       this.log.info(
         'Syncing mode enabled! Skipping batch submission and clearing queue...'
       )
       return this._onSync()
     }
+    */
     const range = await this._getBatchStartAndEnd()
     if (!range) {
       return

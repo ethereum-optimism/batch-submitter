@@ -61,7 +61,7 @@ export class StateBatchSubmitter extends BatchSubmitter {
       this.log.error(
         'Verifier mode enabled! Batch submitter only compatible with sequencer mode'
       )
-      process.exit(1)
+      //process.exit(1)
     }
     this.syncing = info.syncing
     const addrs = await this._getChainAddresses(info)
@@ -140,9 +140,11 @@ export class StateBatchSubmitter extends BatchSubmitter {
       'appendStateBatch',
       [batch, startBlock]
     )
+    /*
     if (!this._shouldSubmitBatch(tx.length * 2)) {
       return
     }
+    */
 
     const offsetStartsAtIndex = startBlock - BLOCK_OFFSET // TODO: Remove BLOCK_OFFSET by adding a tx to Geth's genesis
     this.log.debug('Submitting batch. Tx:', tx)
@@ -165,6 +167,7 @@ export class StateBatchSubmitter extends BatchSubmitter {
       const block = (await this.l2Provider.getBlockWithTransactions(
         i
       )) as L2Block
+      this.log.debug(`fetched block ${i}`)
       if (block.transactions[0].from === this.fraudSubmissionAddress) {
         batch.push(
           '0xbad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1'
