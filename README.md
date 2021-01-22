@@ -6,6 +6,8 @@ Contains an executable batch submitter service which watches L1 and a local L2 n
 ## Configuration
 All configuration is done via environment variables.
 
+For enviornment variable definitions see the list here: https://github.com/ethereum-optimism/batch-submitter/blob/master/src/exec/run-batch-submitter.ts
+
 ## Building & Running
 1. Make sure dependencies are installed just run `yarn` in the base directory
 2. Build `yarn build`
