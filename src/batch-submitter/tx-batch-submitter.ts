@@ -213,6 +213,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     this._updateLastL1BlockNumber() // TODO: Remove this
     const batch: Batch = []
     for (let i = startBlock; i < endBlock; i++) {
+      this.log.debug(`Fetching L2BatchElement ${i}`)
       batch.push(await this._getL2BatchElement(i))
     }
     let sequencerBatchParams = await this._getSequencerBatchParams(

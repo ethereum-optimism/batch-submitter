@@ -51,6 +51,9 @@ interface RequiredEnvVars {
   // The safe minimum amount of ether the batch submitter key should
   // hold before it starts to log errors.
   SAFE_MINIMUM_ETHER_BALANCE: 'SAFE_MINIMUM_ETHER_BALANCE'
+  // A boolean to clear the pending transactions in the mempool
+  // on start up.
+  CLEAR_PENDING_TXS: 'true' | 'false' | 'CLEAR_PENDING_TXS',
 }
 const requiredEnvVars: RequiredEnvVars = {
   L1_NODE_WEB3_URL: 'L1_NODE_WEB3_URL',
@@ -66,6 +69,7 @@ const requiredEnvVars: RequiredEnvVars = {
   RUN_TX_BATCH_SUBMITTER: 'RUN_TX_BATCH_SUBMITTER',
   RUN_STATE_BATCH_SUBMITTER: 'RUN_STATE_BATCH_SUBMITTER',
   SAFE_MINIMUM_ETHER_BALANCE: 'SAFE_MINIMUM_ETHER_BALANCE',
+  CLEAR_PENDING_TXS: 'CLEAR_PENDING_TXS',
 }
 
 /* Optional Env Vars
@@ -92,6 +96,8 @@ export const run = async () => {
     }
     requiredEnvVars[val] = process.env[val]
   }
+
+  const clearPendingTxs = requiredEnvVars.CLEAR_PENDING_TXS === 'true'
 
   const l1Provider: Provider = new JsonRpcProvider(
     requiredEnvVars.L1_NODE_WEB3_URL
@@ -121,7 +127,7 @@ export const run = async () => {
     parseInt(requiredEnvVars.MIN_TX_SIZE, 10),
     parseInt(requiredEnvVars.MAX_TX_SIZE, 10),
     parseInt(requiredEnvVars.MAX_BATCH_SIZE, 10),
-    parseInt(requiredEnvVars.MAX_BATCH_SUBMISSION_TIME, 10),
+    parseInt(requiredEnvVars.MAX_BATCH_SUBMISSION_TIME, 10) * 1_000,
     parseInt(requiredEnvVars.NUM_CONFIRMATIONS, 10),
     parseInt(requiredEnvVars.RESUBMISSION_TIMEOUT, 10) * 1_000,
     true,
@@ -151,25 +157,32 @@ export const run = async () => {
     func: () => Promise<TransactionReceipt>
   ): Promise<void> => {
     // Clear all pending transactions
-    const pendingTxs = await sequencerSigner.getTransactionCount('pending')
-    const latestTxs = await sequencerSigner.getTransactionCount('latest')
-    if (pendingTxs > latestTxs) {
-      log.info('Detected pending transactions. Clearing all transactions!')
-      for (let i = latestTxs; i < pendingTxs; i++) {
-        const response = await sequencerSigner.sendTransaction({
-          to: await sequencerSigner.getAddress(),
-          value: 0,
-          nonce: i,
-        })
-        log.info(`Submitting transaction with nonce: ${i}; hash: ${response.hash}`)
-        await BatchSubmitter.getReceiptWithResubmission(
-          response,
-          [],
-          sequencerSigner,
-          parseInt(requiredEnvVars.NUM_CONFIRMATIONS, 10),
-          60 * 1_000,  // Attempt resubmission every 60 seconds
-          log,
-        )
+    if (clearPendingTxs) {
+      try {
+        const pendingTxs = await sequencerSigner.getTransactionCount('pending')
+        const latestTxs = await sequencerSigner.getTransactionCount('latest')
+        if (pendingTxs > latestTxs) {
+          log.info('Detected pending transactions. Clearing all transactions!')
+          for (let i = latestTxs; i < pendingTxs; i++) {
+            const response = await sequencerSigner.sendTransaction({
+              to: await sequencerSigner.getAddress(),
+              value: 0,
+              nonce: i,
+            })
+            log.info(`Submitting transaction with nonce: ${i}; hash: ${response.hash}`)
+            await BatchSubmitter.getReceiptWithResubmission(
+              response,
+              [],
+              sequencerSigner,
+              parseInt(requiredEnvVars.NUM_CONFIRMATIONS, 10),
+              60 * 1_000,  // Attempt resubmission every 60 seconds
+              log,
+            )
+          }
+        }
+      } catch (err) {
+        log.error('Cannot clear transactions', err)
+        process.exit(1)
       }
     }
 
