@@ -174,7 +174,7 @@ export const run = async () => {
         }
       }
     } catch (err) {
-      this.log.error('Cannot clear transactions', err)
+      log.error('Cannot clear transactions', err)
     }
 
     while (true) {
