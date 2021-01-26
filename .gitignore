@@ -1,6 +1,7 @@
 build
 dist
 node_modules
+.env
 
 # vim
 *.swp
