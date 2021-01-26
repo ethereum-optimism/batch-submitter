@@ -9,6 +9,8 @@ import { OptimismProvider } from '@eth-optimism/provider'
 import { L2Block, Bytes32 } from '..'
 import { RollupInfo, Range, BatchSubmitter, BLOCK_OFFSET } from '.'
 
+const END_HEIGHT = 16410
+
 export class StateBatchSubmitter extends BatchSubmitter {
   // TODO: Change this so that we calculate start = scc.totalElements() and end = ctc.totalElements()!
   // Not based on the length of the L2 chain -- that is only used in the batch submitter
@@ -119,10 +121,10 @@ export class StateBatchSubmitter extends BatchSubmitter {
       )
       return
     }
-    if (endBlock >= 10600) {
+    if (endBlock >= END_HEIGHT) {
       return {
         start: startBlock,
-        end: 10600,
+        end: END_HEIGHT,
       }
     }
     return {
