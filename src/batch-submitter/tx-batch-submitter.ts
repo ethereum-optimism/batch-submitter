@@ -159,11 +159,13 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
   public async _getBatchStartAndEnd(): Promise<Range> {
     const startBlock =
       (await this.chainContract.getTotalElements()).toNumber() + BLOCK_OFFSET
+    // TODO: the +1 introduces a bug where the batch size will
+    // be one larger than expected but removing it causes CI to fail
     const endBlock =
       Math.min(
         startBlock + this.maxBatchSize,
         await this.l2Provider.getBlockNumber()
-      )
+      ) + 1
     if (startBlock >= endBlock) {
       if (startBlock > endBlock) {
         this.log
@@ -280,7 +282,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
           'Attempted to generate batch context with 0 queued and 0 sequenced txs!'
         )
       }
-      contexts.push({
+      const context = {
         numSequencedTransactions: groupedBlock.sequenced.length,
         numSubsequentQueueTransactions: groupedBlock.queued.length,
         timestamp:
@@ -291,7 +293,8 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
           groupedBlock.sequenced.length > 0
             ? groupedBlock.sequenced[0].blockNumber
             : groupedBlock.queued[0].blockNumber,
-      })
+      }
+      contexts.push(context)
     }
 
     // Generate sequencer transactions
