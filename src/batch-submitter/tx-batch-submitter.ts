@@ -163,7 +163,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       Math.min(
         startBlock + this.maxBatchSize,
         await this.l2Provider.getBlockNumber()
-      ) + 1 // +1 because the `endBlock` is *exclusive*
+      ) + 1 // +1 because the endBlock is *exclusive*
     if (startBlock >= endBlock) {
       if (startBlock > endBlock) {
         this.log
