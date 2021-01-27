@@ -159,13 +159,11 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
   public async _getBatchStartAndEnd(): Promise<Range> {
     const startBlock =
       (await this.chainContract.getTotalElements()).toNumber() + BLOCK_OFFSET
-    // TODO: the +1 introduces a bug where the batch size will
-    // be one larger than expected but removing it causes CI to fail
     const endBlock =
       Math.min(
         startBlock + this.maxBatchSize,
         await this.l2Provider.getBlockNumber()
-      ) + 1
+      ) + 1 // +1 because the `endBlock` is *exclusive*
     if (startBlock >= endBlock) {
       if (startBlock > endBlock) {
         this.log
