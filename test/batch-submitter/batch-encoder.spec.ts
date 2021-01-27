@@ -64,7 +64,7 @@ describe('BatchEncoder', () => {
           timestamp: 100,
           blockNumber: 200
         }],
-        transactions: ['45423400000011', '45423400000012'],
+        transactions: ['0x45423400000011', '0x45423400000012'],
       }
       const encoded = encodeAppendSequencerBatch(batch)
       const decoded = decodeAppendSequencerBatch(encoded)

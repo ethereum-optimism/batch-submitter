@@ -2,7 +2,7 @@
 import { Contract, BigNumber } from 'ethers'
 import { TransactionResponse } from '@ethersproject/abstract-provider'
 import { keccak256 } from 'ethers/lib/utils'
-import { remove0x, encodeHex } from './utils'
+import { add0x, remove0x, encodeHex } from './utils'
 
 export interface BatchContext {
   numSequencedTransactions: number
@@ -120,7 +120,7 @@ export const decodeAppendSequencerBatch = (b: string): AppendSequencerBatchParam
       const size = b.slice(offset, offset + 6)
       offset += 6
       const raw = b.slice(offset, offset + (parseInt(size, 16) * 2))
-      transactions.push(raw)
+      transactions.push(add0x(raw))
       offset += raw.length
     }
   }
