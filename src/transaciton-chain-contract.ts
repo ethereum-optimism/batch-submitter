@@ -86,3 +86,51 @@ const encodeBatchContext = (context: BatchContext): string => {
     encodeHex(context.blockNumber, 10)
   )
 }
+
+export const decodeAppendSequencerBatch = (b: string): AppendSequencerBatchParams => {
+  b = remove0x(b)
+
+  const shouldStartAtBatch = b.slice(0, 10)
+  const totalElementsToAppend = b.slice(10, 16)
+
+  //const contextHeader = b.slice(16, 22)
+  const contextHeader = b.slice(16, 22)
+  const contextCount = parseInt(contextHeader, 16)
+
+  let offset = 22
+  const contexts = []
+  for (let i = 0; i < contextCount; i++) {
+    const numSequencedTransactions = b.slice(offset, offset + 6)
+    offset += 6
+    const numSubsequentQueueTransactions = b.slice(offset, offset + 6)
+    offset += 6
+    const timestamp = b.slice(offset, offset + 10)
+    offset += 10
+    const blockNumber = b.slice(offset, offset + 10)
+    offset += 10
+    contexts.push({
+      numSequencedTransactions: parseInt(numSequencedTransactions, 16),
+      numSubsequentQueueTransactions: parseInt(numSubsequentQueueTransactions, 16),
+      timestamp: parseInt(timestamp, 16),
+      blockNumber: parseInt(blockNumber, 16),
+    })
+  }
+
+  const transactions = []
+  for (const context of contexts) {
+    for (let i = 0; i < context.numSequencedTransactions; i++) {
+      const size = b.slice(offset, offset + 6)
+      offset += 6
+      const raw = b.slice(offset, offset + (parseInt(size, 16) * 2))
+      transactions.push(raw)
+      offset += raw.length
+    }
+  }
+
+  return {
+    shouldStartAtBatch: parseInt(shouldStartAtBatch, 16),
+    totalElementsToAppend: parseInt(totalElementsToAppend, 16),
+    contexts,
+    transactions
+  }
+}

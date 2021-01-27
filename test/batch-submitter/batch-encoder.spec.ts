@@ -1,7 +1,7 @@
 import '../setup'
 
 /* Internal Imports */
-import { ctcCoder } from '../../src'
+import { ctcCoder, encodeAppendSequencerBatch, decodeAppendSequencerBatch } from '../../src'
 import { expect } from 'chai'
 
 describe('BatchEncoder', () => {
@@ -38,6 +38,37 @@ describe('BatchEncoder', () => {
       const encoded = ctcCoder.createEOATxData.encode(createEOATxData)
       const decoded = ctcCoder.createEOATxData.decode(encoded)
       expect(createEOATxData).to.deep.equal(decoded)
+    })
+  })
+
+  describe('appendSequencerBatch', () => {
+    it('should work with the simple case', () => {
+      const batch = {
+        shouldStartAtBatch: 0,
+        totalElementsToAppend: 0,
+        contexts: [],
+        transactions: [],
+      }
+      const encoded = encodeAppendSequencerBatch(batch)
+      const decoded = decodeAppendSequencerBatch(encoded)
+      expect(decoded).to.deep.equal(batch)
+    })
+
+    it('should work with more complex case', () => {
+      const batch = {
+        shouldStartAtBatch: 10,
+        totalElementsToAppend: 1,
+        contexts: [{
+          numSequencedTransactions: 2,
+          numSubsequentQueueTransactions: 1,
+          timestamp: 100,
+          blockNumber: 200
+        }],
+        transactions: ['45423400000011', '45423400000012'],
+      }
+      const encoded = encodeAppendSequencerBatch(batch)
+      const decoded = decodeAppendSequencerBatch(encoded)
+      expect(decoded).to.deep.equal(batch)
     })
   })
 })

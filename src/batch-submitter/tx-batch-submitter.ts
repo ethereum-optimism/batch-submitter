@@ -157,14 +157,13 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
   }
 
   public async _getBatchStartAndEnd(): Promise<Range> {
-    // TODO: Remove BLOCK_OFFSET by adding a tx to Geth's genesis
     const startBlock =
       (await this.chainContract.getTotalElements()).toNumber() + BLOCK_OFFSET
     const endBlock =
       Math.min(
         startBlock + this.maxBatchSize,
         await this.l2Provider.getBlockNumber()
-      ) + 1 // +1 because the `endBlock` is *exclusive*
+      )
     if (startBlock >= endBlock) {
       if (startBlock > endBlock) {
         this.log
@@ -315,7 +314,6 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     }
 
     return {
-      // TODO: Remove BLOCK_OFFSET by adding a tx to Geth's genesis
       shouldStartAtBatch: shouldStartAtIndex - BLOCK_OFFSET,
       totalElementsToAppend,
       contexts,
