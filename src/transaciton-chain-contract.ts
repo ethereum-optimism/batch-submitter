@@ -92,8 +92,6 @@ export const decodeAppendSequencerBatch = (b: string): AppendSequencerBatchParam
 
   const shouldStartAtBatch = b.slice(0, 10)
   const totalElementsToAppend = b.slice(10, 16)
-
-  //const contextHeader = b.slice(16, 22)
   const contextHeader = b.slice(16, 22)
   const contextCount = parseInt(contextHeader, 16)
 
