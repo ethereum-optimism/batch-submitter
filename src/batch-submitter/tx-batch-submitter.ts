@@ -105,6 +105,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       getContractInterface('OVM_CanonicalTransactionChain'),
       this.signer
     )
+
     this.log.info(
       `Initialized new CTC with address: ${this.chainContract.address}`
     )
@@ -292,8 +293,24 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
             ? groupedBlock.sequenced[0].blockNumber
             : groupedBlock.queued[0].blockNumber,
       }
+      if (shouldStartAtIndex === 23158) {
+        context.blockNumber = 11734130
+        context.timestamp = 1611700743
+      }
       contexts.push(context)
     }
+
+    /// submitted a single batch
+    /*
+    // Must only submit one batch
+    let count = 0
+    for (const context of contexts) {
+      if (count < 2 && context.numSubsequentQueueTransactions > 0) {
+        context.numSubsequentQueueTransactions--
+        count++
+      }
+    }
+    */
 
     // Generate sequencer transactions
     const transactions: string[] = []
