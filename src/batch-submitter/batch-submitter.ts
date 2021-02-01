@@ -169,7 +169,7 @@ export abstract class BatchSubmitter {
         maxGasPrice: ynatm.toGwei(20),
         gasPriceScalingFunction: ynatm.LINEAR(5), // use config? Scales by 5 GWEI in gasPrice between each try
         delay: resubmissionTimeout
-      }); 
+      });
 
       log.debug('Resubmission tx response:', tx)
       const receipt = await tx.wait(numConfirmations)
@@ -196,7 +196,7 @@ export abstract class BatchSubmitter {
       this.resubmissionTimeout,
       this.log
     )
-    
+
     this.log.debug('Transaction receipt:', receipt)
     this.log.info(successMessage)
     return receipt
