@@ -4,7 +4,7 @@ Contains an executable batch submitter service which watches L1 and a local L2 n
 `CanonicalTransactionChain` & `StateCommitmentChain` based on its local information.
 
 ## Configuration
-All configuration is done via environment variables.
+All configuration is done via environment variables. See all variables at [.env.example](.env.example); copy into a `.env` file before running.
 
 ## Building & Running
 1. Make sure dependencies are installed just run `yarn` in the base directory
