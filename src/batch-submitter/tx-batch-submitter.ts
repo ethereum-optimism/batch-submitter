@@ -216,6 +216,10 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       this.log.debug(`Fetching L2BatchElement ${i}`)
       batch.push(await this._getL2BatchElement(i))
     }
+
+    // Validate batch context
+    this._validateBatch(batch)
+
     let sequencerBatchParams = await this._getSequencerBatchParams(
       startBlock,
       batch
@@ -235,6 +239,62 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       wasBatchTruncated = true
     }
     return [sequencerBatchParams, wasBatchTruncated]
+  }
+
+  /**
+   * Returns true if the batch is valid.
+   */
+  private async _validateBatch(batch: Batch): Promise<boolean> {
+    // Verify all of the queue elements are what we expect
+    let nextQueueIndex = await this.chainContract.getNextQueueIndex()
+    for (const ele of batch) {
+      if (!ele.isSequencerTx) {
+        this.log.debug('validate returned!', await this._isQueueElementEqual(nextQueueIndex, ele))
+        nextQueueIndex ++
+      }
+      this.log.debug('Batch element:', ele)
+      this.log.debug('next queue index', nextQueueIndex)
+    }
+
+    // Verify all of the batch elements are monotonic
+    let lastTimestamp: number
+    let lastBlockNumber: number
+    for (const ele of batch) {
+      if (ele.timestamp < lastTimestamp) {
+        this.log.error('Timestamp monotonicity violated!')
+        return false
+      }
+      if (ele.blockNumber < lastBlockNumber) {
+        this.log.error('Block Number monotonicity violated!')
+        return false
+      }
+      lastTimestamp = ele.timestamp
+      lastBlockNumber = ele.blockNumber
+    }
+    return true
+  }
+
+  private async _isQueueElementEqual(queueIndex: number, queueElement: BatchElement): Promise<boolean> {
+    const logEqualityError = (name, index, expected, got) => {
+      this.log.error(name, 'mismatch | Index:', index, '| Expected:', expected, '| Received:', got)
+    }
+
+    let isEqual = true
+    const [queueEleHash, timestamp, blockNumber] = await this.chainContract.getQueueElement(queueIndex)
+
+    // TODO: Verify queue element hash equality. The queue element hash can be computed with:
+    // keccak256( abi.encode( msg.sender, _target, _gasLimit, _data))
+
+    // Check timestamp & blockNumber equality
+    if (timestamp !== queueElement.timestamp) {
+      isEqual = false
+      logEqualityError('Timestamp', queueIndex, timestamp, queueElement.timestamp)
+    }
+    if (blockNumber !== queueElement.blockNumber) {
+      isEqual = false
+      logEqualityError('Block Number', queueIndex, blockNumber, queueElement.blockNumber)
+    }
+    return isEqual
   }
 
   private async _getSequencerBatchParams(
@@ -321,14 +381,6 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       contexts,
       transactions,
     }
-  }
-
-  /**
-   * Returns true if the batch params are valid.
-   */
-  private async _validateBatchParams(batchParams: AppendSequencerBatchParams): Promise<boolean> {
-    // TODO: Add calls to all of the validators we want
-    return true
   }
 
   private async _getL2BatchElement(blockNumber: number): Promise<BatchElement> {
