@@ -16,7 +16,7 @@ import {
   CanonicalTransactionChainContract,
   encodeAppendSequencerBatch,
   BatchContext,
-  AppendSequencerBatchParams,
+  SequencerTransactionBatch,
 } from '../transaciton-chain-contract'
 import {
   EIP155TxData,
@@ -206,7 +206,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
   private async _generateSequencerBatchParams(
     startBlock: number,
     endBlock: number
-  ): Promise<[AppendSequencerBatchParams, boolean]> {
+  ): Promise<[SequencerTransactionBatch, boolean]> {
     // Get all L2 BatchElements for the given range
     // For now we need to update our internal `lastL1BlockNumber` value
     // which is used when submitting batches.
@@ -240,7 +240,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
   private async _getSequencerBatchParams(
     shouldStartAtIndex: number,
     blocks: Batch
-  ): Promise<AppendSequencerBatchParams> {
+  ): Promise<SequencerTransactionBatch> {
     const totalElementsToAppend = blocks.length
 
     // Generate contexts
@@ -316,7 +316,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
 
     return {
       // TODO: Remove BLOCK_OFFSET by adding a tx to Geth's genesis
-      shouldStartAtBatch: shouldStartAtIndex - BLOCK_OFFSET,
+      shouldStartAtElement: shouldStartAtIndex - BLOCK_OFFSET,
       totalElementsToAppend,
       contexts,
       transactions,
