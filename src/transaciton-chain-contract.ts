@@ -11,7 +11,7 @@ export interface BatchContext {
   blockNumber: number
 }
 
-export interface SequencerTransactionBatch {
+export interface AppendSequencerBatchParams {
   shouldStartAtElement: number // 5 bytes -- starts at batch
   totalElementsToAppend: number // 3 bytes -- total_elements_to_append
   contexts: BatchContext[] // total_elements[fixed_size[]]
@@ -24,7 +24,7 @@ export interface SequencerTransactionBatch {
  */
 export class CanonicalTransactionChainContract extends Contract {
   public async appendSequencerBatch(
-    batch: SequencerTransactionBatch
+    batch: AppendSequencerBatchParams
   ): Promise<TransactionResponse> {
     return appendSequencerBatch(this, batch)
   }
@@ -38,7 +38,7 @@ const APPEND_SEQUENCER_BATCH_METHOD_ID = 'appendSequencerBatch()'
 
 const appendSequencerBatch = async (
   OVM_CanonicalTransactionChain: Contract,
-  batch: SequencerTransactionBatch
+  batch: AppendSequencerBatchParams
 ): Promise<TransactionResponse> => {
   const methodId = keccak256(
     Buffer.from(APPEND_SEQUENCER_BATCH_METHOD_ID)
@@ -51,7 +51,7 @@ const appendSequencerBatch = async (
 }
 
 export const encodeAppendSequencerBatch = (
-  b: SequencerTransactionBatch
+  b: AppendSequencerBatchParams
 ): string => {
   const encodedShouldStartAtElement = encodeHex(b.shouldStartAtElement, 10)
   const encodedTotalElementsToAppend = encodeHex(b.totalElementsToAppend, 6)
