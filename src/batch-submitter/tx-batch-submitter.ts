@@ -16,7 +16,7 @@ import {
   CanonicalTransactionChainContract,
   encodeAppendSequencerBatch,
   BatchContext,
-  SequencerTransactionBatch,
+  AppendSequencerBatchParams,
 } from '../transaciton-chain-contract'
 import {
   EIP155TxData,
@@ -217,7 +217,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
   private async _generateSequencerBatchParams(
     startBlock: number,
     endBlock: number
-  ): Promise<[SequencerTransactionBatch, boolean]> {
+  ): Promise<[AppendSequencerBatchParams, boolean]> {
     // Get all L2 BatchElements for the given range
     // For now we need to update our internal `lastL1BlockNumber` value
     // which is used when submitting batches.
@@ -422,7 +422,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
   private async _getSequencerBatchParams(
     shouldStartAtIndex: number,
     blocks: Batch
-  ): Promise<SequencerTransactionBatch> {
+  ): Promise<AppendSequencerBatchParams> {
     const totalElementsToAppend = blocks.length
 
     // Generate contexts
