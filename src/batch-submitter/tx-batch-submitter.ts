@@ -53,6 +53,9 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     resubmissionTimeout: number,
     pullFromAddressManager: boolean,
     minBalanceEther: number,
+    minGasPrice: number,
+    maxGasPrice: number,
+    gasRetryIncrement: number,
     log: Logger,
     disableQueueBatchAppend: boolean
   ) {
@@ -68,6 +71,9 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       0,  // Supply dummy value because it is not used.
       pullFromAddressManager,
       minBalanceEther,
+      minGasPrice,
+      maxGasPrice,
+      gasRetryIncrement,
       log
     )
     this.disableQueueBatchAppend = disableQueueBatchAppend

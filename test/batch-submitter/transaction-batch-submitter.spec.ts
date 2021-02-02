@@ -29,6 +29,9 @@ const DECOMPRESSION_ADDRESS = '0x4200000000000000000000000000000000000008'
 const MAX_GAS_LIMIT = 8_000_000
 const MAX_TX_SIZE = 100_000
 const MIN_TX_SIZE = 1_000
+const MIN_GAS_PRICE = 1
+const MAX_GAS_PRICE = 70
+const GAS_RETRY_INCREMENT = 5
 
 // Helper functions
 interface QueueElement {
@@ -155,6 +158,9 @@ describe('TransactionBatchSubmitter', () => {
         100000,
         false,
         1,
+        MIN_GAS_PRICE,
+        MAX_GAS_PRICE,
+        GAS_RETRY_INCREMENT,
         getLogger(TX_BATCH_SUBMITTER_LOG_TAG),
         false
       )
@@ -257,6 +263,9 @@ describe('TransactionBatchSubmitter', () => {
         100000,
         false,
         1,
+        MIN_GAS_PRICE,
+        MAX_GAS_PRICE,
+        GAS_RETRY_INCREMENT,
         getLogger(TX_BATCH_SUBMITTER_LOG_TAG),
         false
       )

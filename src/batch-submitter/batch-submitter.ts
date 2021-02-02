@@ -31,6 +31,13 @@ export interface Range {
   start: number
   end: number
 }
+export interface ResubmissionConfig {
+  numConfirmations: number,
+  resubmissionTimeout: number,
+  minGasPrice: number,
+  maxGasPrice: number,
+  gasRetryIncrement: number
+}
 
 export abstract class BatchSubmitter {
   protected rollupInfo: RollupInfo
@@ -51,6 +58,9 @@ export abstract class BatchSubmitter {
     readonly finalityConfirmations: number,
     readonly pullFromAddressManager: boolean,
     readonly minBalanceEther: number,
+    readonly minGasPrice: number,
+    readonly maxGasPrice: number,
+    readonly gasRetryIncrement: number,
     readonly log: Logger
   ) {}
 
@@ -144,17 +154,27 @@ export abstract class BatchSubmitter {
   public static async getReceiptWithResubmission(
     response: TransactionResponse,
     signer: Signer,
-    numConfirmations: number,
-    resubmissionTimeout: number,
+    resubmissionConfig: ResubmissionConfig,
     log: Logger,
   ): Promise<TransactionReceipt> {
+    const {
+      numConfirmations,
+      resubmissionTimeout,
+      minGasPrice,
+      maxGasPrice,
+      gasRetryIncrement
+    } = resubmissionConfig
     const receiptPromise = response.wait(numConfirmations)
     const val = await bPromise.resolve(receiptPromise)
 
-    if (val === 'resubmit') {
-      log.debug(`Tx resubmission timeout reached for hash: ${response.hash}; nonce: ${response.nonce}.
+    // Return successful receipt without resubmission
+    if (val !== 'resubmit') {
+      return val
+    }
+
+    log.debug(`Tx resubmission timeout reached for hash: ${response.hash}; nonce: ${response.nonce}.
                 Resubmitting tx...`)
-      const txOptions = {
+    const txOptions = {
         to: response.to,
         data: response.data,
         nonce: response.nonce,
@@ -162,22 +182,19 @@ export abstract class BatchSubmitter {
         gasLimit: response.gasLimit,
       }
 
-      const tx = await ynatm.send({
+    const tx = await ynatm.send({
         sendTransactionFunction: () =>
           signer.sendTransaction(txOptions),
-        minGasPrice: ynatm.toGwei(1), // TODO: use configs
-        maxGasPrice: ynatm.toGwei(20),
-        gasPriceScalingFunction: ynatm.LINEAR(5), // use config? Scales by 5 GWEI in gasPrice between each try
+        minGasPrice,
+        maxGasPrice,
+        gasPriceScalingFunction: ynatm.LINEAR(gasRetryIncrement),
         delay: resubmissionTimeout
       });
 
-      log.debug('Resubmission tx response:', tx)
-      const receipt = await tx.wait(numConfirmations)
+    log.debug('Resubmission tx response:', tx)
+    const receipt = await tx.wait(numConfirmations)
 
-      return receipt
-    } else {
-      return val
-    }
+    return receipt
   }
 
   protected async _submitAndLogTx(
@@ -189,11 +206,18 @@ export abstract class BatchSubmitter {
     this.log.debug('Transaction response:', response)
     this.log.debug('Waiting for receipt...')
 
+    const resubmissionConfig: ResubmissionConfig = {
+      numConfirmations: this.numConfirmations,
+      resubmissionTimeout: this.resubmissionTimeout,
+      minGasPrice: this.minGasPrice,
+      maxGasPrice: this.maxGasPrice,
+      gasRetryIncrement: this.gasRetryIncrement
+    }
+
     const receipt = await BatchSubmitter.getReceiptWithResubmission(
       response,
       this.signer,
-      this.numConfirmations,
-      this.resubmissionTimeout,
+      resubmissionConfig,
       this.log
     )
 

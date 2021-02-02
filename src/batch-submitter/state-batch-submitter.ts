@@ -31,6 +31,9 @@ export class StateBatchSubmitter extends BatchSubmitter {
     finalityConfirmations: number,
     pullFromAddressManager: boolean,
     minBalanceEther: number,
+    minGasPrice: number,
+    maxGasPrice: number,
+    gasRetryIncrement: number,
     log: Logger,
     fraudSubmissionAddress: string
   ) {
@@ -46,6 +49,9 @@ export class StateBatchSubmitter extends BatchSubmitter {
       finalityConfirmations,
       pullFromAddressManager,
       minBalanceEther,
+      minGasPrice,
+      maxGasPrice,
+      gasRetryIncrement,
       log
     )
     this.fraudSubmissionAddress = fraudSubmissionAddress
