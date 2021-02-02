@@ -323,6 +323,14 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     }
   }
 
+  /**
+   * Returns true if the batch params are valid.
+   */
+  private async _validateBatchParams(batchParams: AppendSequencerBatchParams): Promise<boolean> {
+    // TODO: Add calls to all of the validators we want
+    return true
+  }
+
   private async _getL2BatchElement(blockNumber: number): Promise<BatchElement> {
     const block = await this._getBlock(blockNumber)
     const txType = block.transactions[0].txType
