@@ -257,7 +257,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
   /**
    * Returns true if the batch is valid.
    */
-  private async _validateBatch(batch: Batch): Promise<boolean> {
+  protected async _validateBatch(batch: Batch): Promise<boolean> {
     // Verify all of the queue elements are what we expect
     let nextQueueIndex = await this.chainContract.getNextQueueIndex()
     for (const ele of batch) {
