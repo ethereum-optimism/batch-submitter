@@ -4,7 +4,6 @@ import {
   TransactionResponse,
   TransactionReceipt,
 } from '@ethersproject/abstract-provider'
-import { Promise as bPromise } from 'bluebird'
 import * as ynatm from 'ynatm'
 import { Logger } from '@eth-optimism/core-utils'
 import { OptimismProvider } from '@eth-optimism/provider'
@@ -32,7 +31,6 @@ export interface Range {
   end: number
 }
 export interface ResubmissionConfig {
-  numConfirmations: number,
   resubmissionTimeout: number,
   minGasPrice: number,
   maxGasPrice: number,
@@ -61,6 +59,7 @@ export abstract class BatchSubmitter {
     readonly minGasPrice: number,
     readonly maxGasPrice: number,
     readonly gasRetryIncrement: number,
+    readonly receiptTimeout: number,
     readonly log: Logger
   ) {}
 
@@ -153,7 +152,6 @@ export abstract class BatchSubmitter {
 
   public static async getReceiptWithResubmission(
     txFunc: (gasPrice) => Promise<TransactionReceipt>,
-    signer: Signer,
     resubmissionConfig: ResubmissionConfig,
     log: Logger,
   ): Promise<TransactionReceipt> {
@@ -185,7 +183,6 @@ export abstract class BatchSubmitter {
     this.log.debug('Waiting for receipt...')
 
     const resubmissionConfig: ResubmissionConfig = {
-      numConfirmations: this.numConfirmations,
       resubmissionTimeout: this.resubmissionTimeout,
       minGasPrice: this.minGasPrice,
       maxGasPrice: this.maxGasPrice,
@@ -194,7 +191,6 @@ export abstract class BatchSubmitter {
 
     const receipt = await BatchSubmitter.getReceiptWithResubmission(
       txFunc,
-      this.signer,
       resubmissionConfig,
       this.log
     )

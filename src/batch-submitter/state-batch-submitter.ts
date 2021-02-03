@@ -34,6 +34,7 @@ export class StateBatchSubmitter extends BatchSubmitter {
     minGasPrice: number,
     maxGasPrice: number,
     gasRetryIncrement: number,
+    receiptTimeout: number,
     log: Logger,
     fraudSubmissionAddress: string
   ) {
@@ -52,6 +53,7 @@ export class StateBatchSubmitter extends BatchSubmitter {
       minGasPrice,
       maxGasPrice,
       gasRetryIncrement,
+      receiptTimeout,
       log
     )
     this.fraudSubmissionAddress = fraudSubmissionAddress
@@ -148,7 +150,11 @@ export class StateBatchSubmitter extends BatchSubmitter {
     this.log.debug('Submitting batch. Tx:', tx)
     const contractFunction = async (gasPrice): Promise<TransactionReceipt> => {
       const contractTx = await this.chainContract.appendStateBatch(batch, offsetStartsAtIndex, {gasPrice})
-      return this.signer.provider.waitForTransaction(contractTx.hash, this.numConfirmations, 20 * 60 * 1_000) // TODO(annieke): make config 20 min
+      return this.signer.provider.waitForTransaction(
+        contractTx.hash,
+        this.numConfirmations,
+        this.receiptTimeout
+      )
     }
     return this._submitAndLogTx(
       contractFunction,

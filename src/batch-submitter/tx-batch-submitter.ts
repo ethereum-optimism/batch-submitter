@@ -56,6 +56,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     minGasPrice: number,
     maxGasPrice: number,
     gasRetryIncrement: number,
+    receiptTimeout: number,
     log: Logger,
     disableQueueBatchAppend: boolean
   ) {
@@ -74,6 +75,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       minGasPrice,
       maxGasPrice,
       gasRetryIncrement,
+      receiptTimeout,
       log
     )
     this.disableQueueBatchAppend = disableQueueBatchAppend
@@ -128,7 +130,11 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       if (!this.disableQueueBatchAppend) {
         const contractFunction = async (gasPrice): Promise<TransactionReceipt> => {
           const tx = await this.chainContract.appendQueueBatch(99999999, {gasPrice})
-          return this.signer.provider.waitForTransaction(tx.hash, this.numConfirmations, 20 * 60 * 1_000) // TODO(annieke): make config 20 min
+          return this.signer.provider.waitForTransaction(
+            tx.hash,
+            this.numConfirmations,
+            this.receiptTimeout
+          )
         }
 
         // Empty the queue with a huge `appendQueueBatch(..)` call
@@ -207,7 +213,11 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
 
     const contractFunction = async (gasPrice): Promise<TransactionReceipt> => {
       const tx = await this.chainContract.appendSequencerBatch(batchParams, {gasPrice})
-      return this.signer.provider.waitForTransaction(tx.hash, this.numConfirmations, 20 * 60 * 1_000) // TODO(annieke): make config 20 min 
+      return this.signer.provider.waitForTransaction(
+        tx.hash,
+        this.numConfirmations,
+        this.receiptTimeout
+      )
     }
     return this._submitAndLogTx(
       contractFunction,

@@ -32,6 +32,7 @@ const MIN_TX_SIZE = 1_000
 const MIN_GAS_PRICE = 1
 const MAX_GAS_PRICE = 70
 const GAS_RETRY_INCREMENT = 5
+const RECEIPT_TIMEOUT = 20 * 60 * 10_000
 
 // Helper functions
 interface QueueElement {
@@ -161,6 +162,7 @@ describe('TransactionBatchSubmitter', () => {
         MIN_GAS_PRICE,
         MAX_GAS_PRICE,
         GAS_RETRY_INCREMENT,
+        RECEIPT_TIMEOUT,
         getLogger(TX_BATCH_SUBMITTER_LOG_TAG),
         false
       )
@@ -266,6 +268,7 @@ describe('TransactionBatchSubmitter', () => {
         MIN_GAS_PRICE,
         MAX_GAS_PRICE,
         GAS_RETRY_INCREMENT,
+        RECEIPT_TIMEOUT,
         getLogger(TX_BATCH_SUBMITTER_LOG_TAG),
         false
       )

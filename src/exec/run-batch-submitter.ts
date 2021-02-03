@@ -84,6 +84,7 @@ const DISABLE_QUEUE_BATCH_APPEND = !!env.DISABLE_QUEUE_BATCH_APPEND
 const MIN_GAS_PRICE = parseInt(env.MIN_GAS_PRICE, 10) || 1
 const MAX_GAS_PRICE = parseInt(env.MAX_GAS_PRICE, 10) || 70
 const GAS_RETRY_INCREMENT = parseInt(env.GAS_RETRY_INCREMENT, 10) || 5
+const RECEIPT_TIMEOUT = parseInt(env.RECEIPT_TIMEOUT, 10) || 20 * 60 * 1_000 // 20 minutes
 // The private key that will be used to submit tx and state batches.
 const SEQUENCER_PRIVATE_KEY = env.SEQUENCER_PRIVATE_KEY
 const MNEMONIC = env.MNEMONIC
@@ -138,6 +139,7 @@ export const run = async () => {
     MIN_GAS_PRICE,
     MAX_GAS_PRICE,
     GAS_RETRY_INCREMENT,
+    RECEIPT_TIMEOUT,
     getLogger(TX_BATCH_SUBMITTER_LOG_TAG),
     DISABLE_QUEUE_BATCH_APPEND
   )
@@ -157,6 +159,7 @@ export const run = async () => {
     MIN_GAS_PRICE,
     MAX_GAS_PRICE,
     GAS_RETRY_INCREMENT,
+    RECEIPT_TIMEOUT,
     getLogger(STATE_BATCH_SUBMITTER_LOG_TAG),
     FRAUD_SUBMISSION_ADDRESS
   )
@@ -185,7 +188,7 @@ export const run = async () => {
               return this.signer.provider.waitForTransaction(
                 response.hash,
                 parseInt(requiredEnvVars.NUM_CONFIRMATIONS, 10),
-                20 * 60 * 1_000 // TODO(annieke): make config 20 min
+                RECEIPT_TIMEOUT
               )
           }
             log.info(`Submitting transaction with nonce: ${i}`)
@@ -199,7 +202,6 @@ export const run = async () => {
             }
             await BatchSubmitter.getReceiptWithResubmission(
               sendTxFunction,
-              sequencerSigner,
               resubmissionConfig,
               log,
             )

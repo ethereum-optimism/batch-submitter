@@ -21,3 +21,7 @@ Before running, set the `DEBUG` environment variable to specify the verbosity le
 Examples:
 * Everything but debug: `export DEBUG=info*,error*,warn*`
 * Most verbose: `export DEBUG=info*,error*,warn*,debug*`
+
+## Testing & linting
+- Run unit tests with `yarn test`
+- See lint errors with `yarn lint`; auto-fix with `yarn lint --fix`
