@@ -315,17 +315,37 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       for (const ele of b) {
         if (!ele.isSequencerTx) {
           if (!(await this._doesQueueElementMatchL1(nextQueueIndex, ele))) {
+            this.log.warn('Fixing double played queue element. Index:', nextQueueIndex)
             fixedBatch.push(await this._fixQueueElement(nextQueueIndex, ele))
             continue
           }
+          nextQueueIndex++
         }
         fixedBatch.push(ele)
-        nextQueueIndex++
+      }
+      return fixedBatch
+    }
+
+    const fixDelayedTimestampAndBlockNumber = async (b: Batch): Promise<Batch> => {
+      const earliestBlockNumber = 11734130
+      const earliestTimestamp = 1611700743
+      const fixedBatch: Batch = []
+      for (const ele of b) {
+        if (ele.timestamp < earliestTimestamp || ele.blockNumber < earliestBlockNumber) {
+          fixedBatch.push({
+            ...ele,
+            timestamp: earliestTimestamp,
+            blockNumber: earliestBlockNumber
+          })
+          continue
+        }
+        fixedBatch.push(ele)
       }
       return fixedBatch
     }
 
     batch = await fixDoublePlayedDeposits(batch)
+    batch = await fixDelayedTimestampAndBlockNumber(batch)
     return batch
   }
 
