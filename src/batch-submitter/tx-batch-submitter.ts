@@ -35,13 +35,18 @@ import {
 } from '..'
 import { RollupInfo, Range, BatchSubmitter, BLOCK_OFFSET } from '.'
 
+export interface AutoFixBatchOptions {
+  fixDoublePlayedDeposits: boolean
+  fixDelayedTimestampAndBlockNumberHardcoded: boolean
+}
+
 export class TransactionBatchSubmitter extends BatchSubmitter {
   protected chainContract: CanonicalTransactionChainContract
   protected l2ChainId: number
   protected syncing: boolean
   protected lastL1BlockNumber: number
   private disableQueueBatchAppend: boolean
-  private autoFixBatches: boolean = true
+  private autoFixBatchOptions: AutoFixBatchOptions
 
   constructor(
     signer: Signer,
@@ -55,7 +60,8 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     pullFromAddressManager: boolean,
     minBalanceEther: number,
     log: Logger,
-    disableQueueBatchAppend: boolean
+    disableQueueBatchAppend: boolean,
+    autoFixBatchOptions: AutoFixBatchOptions, // TODO: Remove this
   ) {
     super(
       signer,
@@ -72,6 +78,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       log
     )
     this.disableQueueBatchAppend = disableQueueBatchAppend
+    this.autoFixBatchOptions = autoFixBatchOptions
   }
 
   /*****************************
@@ -217,9 +224,8 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       this.log.debug(`Fetching L2BatchElement ${i}`)
       batch.push(await this._getL2BatchElement(i))
     }
-    if (this.autoFixBatches) {
-      batch = await this._fixBatch(batch)
-    }
+    // Fix our batches if we are configured to. TODO: Remove this.
+    batch = await this._fixBatch(batch)
     if (!(await this._validateBatch(batch))) {
       this.log.error('Batch is malformed! Cannot submit next batch!')
       throw (new Error('Batch is malformed! Cannot submit next batch!'))
@@ -326,7 +332,9 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       return fixedBatch
     }
 
-    const fixDelayedTimestampAndBlockNumber = async (b: Batch): Promise<Batch> => {
+    const fixDelayedTimestampAndBlockNumberHardcoded = async (b: Batch): Promise<Batch> => {
+      // These just so happen to be a block number & timestamp that we are stuck at & so
+      // to get unstuck use these values.
       const earliestBlockNumber = 11734130
       const earliestTimestamp = 1611700743
       const fixedBatch: Batch = []
@@ -344,8 +352,12 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       return fixedBatch
     }
 
-    batch = await fixDoublePlayedDeposits(batch)
-    batch = await fixDelayedTimestampAndBlockNumber(batch)
+    if (this.autoFixBatchOptions.fixDoublePlayedDeposits) {
+      batch = await fixDoublePlayedDeposits(batch)
+    }
+    if (this.autoFixBatchOptions.fixDelayedTimestampAndBlockNumberHardcoded) {
+      batch = await fixDelayedTimestampAndBlockNumberHardcoded(batch)
+    }
     return batch
   }
 

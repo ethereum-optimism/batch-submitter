@@ -14,6 +14,7 @@ config()
 /* Internal Imports */
 import {
   TransactionBatchSubmitter,
+  AutoFixBatchOptions,
   BatchSubmitter,
   StateBatchSubmitter,
   STATE_BATCH_SUBMITTER_LOG_TAG,
@@ -85,6 +86,12 @@ const DISABLE_QUEUE_BATCH_APPEND = !!env.DISABLE_QUEUE_BATCH_APPEND
 const SEQUENCER_PRIVATE_KEY = env.SEQUENCER_PRIVATE_KEY
 const MNEMONIC = env.MNEMONIC
 const HD_PATH = env.HD_PATH
+// Auto fix batch options -- TODO: Remove this very hacky config
+const AUTO_FIX_BATCH_OPTIONS_CONF = env.AUTO_FIX_BATCH_OPTIONS_CONF
+const autoFixBatchOptions: AutoFixBatchOptions = {
+  fixDoublePlayedDeposits: AUTO_FIX_BATCH_OPTIONS_CONF.includes('fixDoublePlayedDeposits'),
+  fixDelayedTimestampAndBlockNumberHardcoded: AUTO_FIX_BATCH_OPTIONS_CONF.includes('fixDelayedTimestampAndBlockNumberHardcoded'),
+}
 
 export const run = async () => {
   log.info('Starting batch submitter...')
@@ -133,7 +140,8 @@ export const run = async () => {
     true,
     parseFloat(requiredEnvVars.SAFE_MINIMUM_ETHER_BALANCE),
     getLogger(TX_BATCH_SUBMITTER_LOG_TAG),
-    DISABLE_QUEUE_BATCH_APPEND
+    DISABLE_QUEUE_BATCH_APPEND,
+    autoFixBatchOptions
   )
 
   const stateBatchSubmitter = new StateBatchSubmitter(
