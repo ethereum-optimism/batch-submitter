@@ -267,7 +267,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
         if (!(await this._doesQueueElementMatchL1(nextQueueIndex, ele))) {
           return false
         }
-        nextQueueIndex ++
+        nextQueueIndex++
       }
     }
 
