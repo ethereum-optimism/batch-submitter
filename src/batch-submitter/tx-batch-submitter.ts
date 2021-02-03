@@ -61,7 +61,10 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     minBalanceEther: number,
     log: Logger,
     disableQueueBatchAppend: boolean,
-    autoFixBatchOptions: AutoFixBatchOptions, // TODO: Remove this
+    autoFixBatchOptions: AutoFixBatchOptions = {
+      fixDoublePlayedDeposits: false,
+      fixDelayedTimestampAndBlockNumberHardcoded: false
+    }, // TODO: Remove this
   ) {
     super(
       signer,

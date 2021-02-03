@@ -89,8 +89,8 @@ const HD_PATH = env.HD_PATH
 // Auto fix batch options -- TODO: Remove this very hacky config
 const AUTO_FIX_BATCH_OPTIONS_CONF = env.AUTO_FIX_BATCH_OPTIONS_CONF
 const autoFixBatchOptions: AutoFixBatchOptions = {
-  fixDoublePlayedDeposits: AUTO_FIX_BATCH_OPTIONS_CONF.includes('fixDoublePlayedDeposits'),
-  fixDelayedTimestampAndBlockNumberHardcoded: AUTO_FIX_BATCH_OPTIONS_CONF.includes('fixDelayedTimestampAndBlockNumberHardcoded'),
+  fixDoublePlayedDeposits: (AUTO_FIX_BATCH_OPTIONS_CONF) ? AUTO_FIX_BATCH_OPTIONS_CONF.includes('fixDoublePlayedDeposits') : false,
+  fixDelayedTimestampAndBlockNumberHardcoded: (AUTO_FIX_BATCH_OPTIONS_CONF) ? AUTO_FIX_BATCH_OPTIONS_CONF.includes('fixDelayedTimestampAndBlockNumberHardcoded') : false,
 }
 
 export const run = async () => {
