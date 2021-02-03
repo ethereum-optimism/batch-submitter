@@ -148,7 +148,7 @@ export class StateBatchSubmitter extends BatchSubmitter {
     this.log.debug('Submitting batch. Tx:', tx)
     const contractFunction = async (gasPrice): Promise<TransactionReceipt> => {
       const contractTx = await this.chainContract.appendStateBatch(batch, offsetStartsAtIndex, {gasPrice})
-      return contractTx.wait(this.numConfirmations)
+      return this.signer.provider.waitForTransaction(contractTx.hash, this.numConfirmations, 20 * 60 * 1_000) // TODO(annieke): make config 20 min
     }
     return this._submitAndLogTx(
       contractFunction,

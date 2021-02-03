@@ -290,7 +290,7 @@ describe('TransactionBatchSubmitter', () => {
       expect(receipt).to.not.be.undefined
     })
 
-    // TODO: write test by turning off hardhat automining
+    // TODO(annieke): write test by turning off hardhat automining
     // it('should resubmit if tx hangs from low gas', async () => {
     // })
   })

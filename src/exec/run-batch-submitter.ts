@@ -182,7 +182,11 @@ export const run = async () => {
                 gasPrice
               })
               const response = await tx
-              return response.wait(parseInt(requiredEnvVars.NUM_CONFIRMATIONS, 10))
+              return this.signer.provider.waitForTransaction(
+                response.hash,
+                parseInt(requiredEnvVars.NUM_CONFIRMATIONS, 10),
+                20 * 60 * 1_000 // TODO(annieke): make config 20 min
+              )
           }
             log.info(`Submitting transaction with nonce: ${i}`)
 
