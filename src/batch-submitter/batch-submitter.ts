@@ -152,58 +152,36 @@ export abstract class BatchSubmitter {
   }
 
   public static async getReceiptWithResubmission(
-    response: TransactionResponse,
+    txFunc: () => Promise<TransactionReceipt>,
     signer: Signer,
     resubmissionConfig: ResubmissionConfig,
     log: Logger,
   ): Promise<TransactionReceipt> {
     const {
-      numConfirmations,
       resubmissionTimeout,
       minGasPrice,
       maxGasPrice,
       gasRetryIncrement
     } = resubmissionConfig
-    const receiptPromise = response.wait(numConfirmations)
-    const val = await bPromise.resolve(receiptPromise)
 
-    // Return successful receipt without resubmission
-    if (val !== 'resubmit') {
-      return val
-    }
-
-    log.debug(`Tx resubmission timeout reached for hash: ${response.hash}; nonce: ${response.nonce}.
-                Resubmitting tx...`)
-    const txOptions = {
-        to: response.to,
-        data: response.data,
-        nonce: response.nonce,
-        value: response.value,
-        gasLimit: response.gasLimit,
-      }
-
-    const tx = await ynatm.send({
-        sendTransactionFunction: () =>
-          signer.sendTransaction(txOptions),
+    const receipt = await ynatm.send({
+        sendTransactionFunction: txFunc,
         minGasPrice,
         maxGasPrice,
         gasPriceScalingFunction: ynatm.LINEAR(gasRetryIncrement),
         delay: resubmissionTimeout
       });
 
-    log.debug('Resubmission tx response:', tx)
-    const receipt = await tx.wait(numConfirmations)
+    log.debug('Resubmission tx receipt:', receipt)
 
     return receipt
   }
 
   protected async _submitAndLogTx(
-    txPromise: Promise<TransactionResponse>,
+    txFunc: () => Promise<TransactionReceipt>,
     successMessage: string
   ): Promise<TransactionReceipt> {
-    const response = await txPromise
     this.lastBatchSubmissionTimestamp = Date.now()
-    this.log.debug('Transaction response:', response)
     this.log.debug('Waiting for receipt...')
 
     const resubmissionConfig: ResubmissionConfig = {
@@ -215,7 +193,7 @@ export abstract class BatchSubmitter {
     }
 
     const receipt = await BatchSubmitter.getReceiptWithResubmission(
-      response,
+      txFunc,
       this.signer,
       resubmissionConfig,
       this.log

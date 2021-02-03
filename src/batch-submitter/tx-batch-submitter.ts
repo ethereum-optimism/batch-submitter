@@ -126,9 +126,14 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       )
 
       if (!this.disableQueueBatchAppend) {
+        const contractFunction = async (): Promise<TransactionReceipt> => {
+          const tx = await this.chainContract.appendQueueBatch(99999999)
+          return tx.wait(this.numConfirmations)
+        }
+
         // Empty the queue with a huge `appendQueueBatch(..)` call
         return this._submitAndLogTx(
-          this.chainContract.appendQueueBatch(99999999),
+          contractFunction,
           'Cleared queue!'
         )
       }
@@ -199,8 +204,13 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       return
     }
     this.log.debug('Submitting batch. Tx calldata:', batchParams)
+
+    const contractFunction = async (): Promise<TransactionReceipt> => {
+      const tx = await this.chainContract.appendSequencerBatch(batchParams)
+      return tx.wait(this.numConfirmations)
+    }
     return this._submitAndLogTx(
-      this.chainContract.appendSequencerBatch(batchParams),
+      contractFunction,
       'Submitted batch!'
     )
   }

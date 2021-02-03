@@ -289,5 +289,9 @@ describe('TransactionBatchSubmitter', () => {
       // The receipt should NOT be undefined because that means it successfully submitted!
       expect(receipt).to.not.be.undefined
     })
+
+    // TODO: write test by turning off hardhat automining
+    // it('should resubmit if tx hangs from low gas', async () => {
+    // })
   })
 })

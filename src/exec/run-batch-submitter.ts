@@ -173,12 +173,17 @@ export const run = async () => {
         if (pendingTxs > latestTxs) {
           log.info('Detected pending transactions. Clearing all transactions!')
           for (let i = latestTxs; i < pendingTxs; i++) {
-            const response = await sequencerSigner.sendTransaction({
-              to: await sequencerSigner.getAddress(),
-              value: 0,
-              nonce: i,
-            })
-            log.info(`Submitting transaction with nonce: ${i}; hash: ${response.hash}`)
+            const seqSignerAddress = await sequencerSigner.getAddress()
+            const sendFunc = async () => {
+              const tx = sequencerSigner.sendTransaction({
+                to: seqSignerAddress,
+                value: 0,
+                nonce: i,
+              })
+              const response = await tx
+              return response.wait(parseInt(requiredEnvVars.NUM_CONFIRMATIONS, 10))
+          }
+            log.info(`Submitting transaction with nonce: ${i}`)
 
             const resubmissionConfig = {
               numConfirmations: parseInt(requiredEnvVars.NUM_CONFIRMATIONS, 10),
@@ -188,7 +193,7 @@ export const run = async () => {
               gasRetryIncrement: GAS_RETRY_INCREMENT
             }
             await BatchSubmitter.getReceiptWithResubmission(
-              response,
+              sendFunc,
               sequencerSigner,
               resubmissionConfig,
               log,
