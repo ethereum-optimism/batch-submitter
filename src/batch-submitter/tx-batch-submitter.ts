@@ -252,14 +252,14 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     // Verify all of the queue elements are what we expect
     let nextQueueIndex = await this.chainContract.getNextQueueIndex()
     for (const ele of batch) {
+      this.log.debug('Verifying batch element:', ele)
       if (!ele.isSequencerTx) {
+        this.log.debug(`Checking queue equality against L1 queue index: ${nextQueueIndex}`)
         if (!(await this._doesQueueElementMatchL1(nextQueueIndex, ele))) {
           return false
         }
         nextQueueIndex ++
       }
-      this.log.debug('Batch element:', ele)
-      this.log.debug('next queue index', nextQueueIndex)
     }
 
     // Verify all of the batch elements are monotonic
@@ -267,11 +267,11 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     let lastBlockNumber: number
     for (const ele of batch) {
       if (ele.timestamp < lastTimestamp) {
-        this.log.error('Timestamp monotonicity violated!')
+        this.log.error('Timestamp monotonicity violated! Element:', ele)
         return false
       }
       if (ele.blockNumber < lastBlockNumber) {
-        this.log.error('Block Number monotonicity violated!')
+        this.log.error('Block Number monotonicity violated! Element:', ele)
         return false
       }
       lastTimestamp = ele.timestamp
