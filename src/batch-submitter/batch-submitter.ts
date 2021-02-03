@@ -152,7 +152,7 @@ export abstract class BatchSubmitter {
   }
 
   public static async getReceiptWithResubmission(
-    txFunc: () => Promise<TransactionReceipt>,
+    txFunc: (gasPrice) => Promise<TransactionReceipt>,
     signer: Signer,
     resubmissionConfig: ResubmissionConfig,
     log: Logger,
@@ -178,7 +178,7 @@ export abstract class BatchSubmitter {
   }
 
   protected async _submitAndLogTx(
-    txFunc: () => Promise<TransactionReceipt>,
+    txFunc: (gasPrice) => Promise<TransactionReceipt>,
     successMessage: string
   ): Promise<TransactionReceipt> {
     this.lastBatchSubmissionTimestamp = Date.now()

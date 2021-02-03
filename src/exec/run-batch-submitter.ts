@@ -174,11 +174,12 @@ export const run = async () => {
           log.info('Detected pending transactions. Clearing all transactions!')
           for (let i = latestTxs; i < pendingTxs; i++) {
             const seqSignerAddress = await sequencerSigner.getAddress()
-            const sendFunc = async () => {
+            const sendTxFunction = async (gasPrice) => {
               const tx = sequencerSigner.sendTransaction({
                 to: seqSignerAddress,
                 value: 0,
                 nonce: i,
+                gasPrice
               })
               const response = await tx
               return response.wait(parseInt(requiredEnvVars.NUM_CONFIRMATIONS, 10))
@@ -193,7 +194,7 @@ export const run = async () => {
               gasRetryIncrement: GAS_RETRY_INCREMENT
             }
             await BatchSubmitter.getReceiptWithResubmission(
-              sendFunc,
+              sendTxFunction,
               sequencerSigner,
               resubmissionConfig,
               log,

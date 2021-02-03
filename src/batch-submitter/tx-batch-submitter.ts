@@ -126,8 +126,8 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       )
 
       if (!this.disableQueueBatchAppend) {
-        const contractFunction = async (): Promise<TransactionReceipt> => {
-          const tx = await this.chainContract.appendQueueBatch(99999999)
+        const contractFunction = async (gasPrice): Promise<TransactionReceipt> => {
+          const tx = await this.chainContract.appendQueueBatch(99999999, {gasPrice})
           return tx.wait(this.numConfirmations)
         }
 
@@ -205,8 +205,8 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     }
     this.log.debug('Submitting batch. Tx calldata:', batchParams)
 
-    const contractFunction = async (): Promise<TransactionReceipt> => {
-      const tx = await this.chainContract.appendSequencerBatch(batchParams)
+    const contractFunction = async (gasPrice): Promise<TransactionReceipt> => {
+      const tx = await this.chainContract.appendSequencerBatch(batchParams, {gasPrice})
       return tx.wait(this.numConfirmations)
     }
     return this._submitAndLogTx(
