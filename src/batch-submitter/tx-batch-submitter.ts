@@ -1,5 +1,5 @@
 /* External Imports */
-import { BigNumber, Signer, ethers } from 'ethers'
+import { BigNumber, Signer, ethers, Wallet } from 'ethers'
 import {
   TransactionResponse,
   TransactionReceipt,
@@ -371,17 +371,32 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       this.log.warn('Double deposit detected!!! Fixing by skipping the deposit & replacing with a dummy tx.')
       // This implies that we've double played a deposit.
       // We can correct this by instead submitting a dummy sequencer tx
+      const wallet = Wallet.createRandom()
+      const gasLimit = 8_000_000
+      const gasPrice = 0
+      const chainId = 10
+      const nonce = 0
+      const rawTx = await wallet.signTransaction({
+        gasLimit,
+        gasPrice,
+        chainId,
+        nonce,
+        to: '0x1111111111111111111111111111111111111111',
+        data: '0x1234'
+      })
+      // tx: [0nonce, 1gasprice, 2startgas, 3to, 4value, 5data, 6v, 7r, 8s]
+      const tx = ethers.utils.RLP.decode(rawTx)
       const dummyTx: EIP155TxData = {
         sig: {
-          v: '01',
-          r: ethers.utils.keccak256('0x' + (Date.now()).toString(16).padStart(20, '0')),
-          s: ethers.utils.keccak256('0x' + (Date.now() + 1).toString(16).padStart(20, '0')),
+          v: tx[6],
+          r: tx[7],
+          s: tx[8],
         },
-        gasLimit: 8_000_000,
-        gasPrice: 0,
-        nonce: 0,
-        target: '0x1111111111111111111111111111111111111111',
-        data: '0x1234'
+        gasLimit,
+        gasPrice,
+        nonce,
+        target: tx[3],
+        data: tx[5]
       }
       // Sleep two miliseconds to ensure that the signature is unique.
       // I am generating the signature baseed on the hash of the current time
