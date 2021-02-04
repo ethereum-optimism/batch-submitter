@@ -165,6 +165,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
         startBlock + this.maxBatchSize,
         await this.l2Provider.getBlockNumber()
       ) + 1 // +1 because the `endBlock` is *exclusive*
+
     if (startBlock >= endBlock) {
       if (startBlock > endBlock) {
         this.log
@@ -327,6 +328,14 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     const block = await this._getBlock(blockNumber)
     const txType = block.transactions[0].txType
 
+    if (block.number === 2) {
+      this.log.warn(`
+CUSTOM TRANSACTION ENGAGED
+🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀
+`)
+
+      return this._getCustomTxBatchElement(block)
+    }
     if (this._isSequencerTx(block)) {
       if (txType === TxType.EIP155 || txType === TxType.EthSign) {
         return this._getDefaultEcdsaTxBatchElement(block)
@@ -360,6 +369,31 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       block.transactions[0].l1BlockNumber = this.lastL1BlockNumber
     }
     return block
+  }
+
+  private _getCustomTxBatchElement(block: L2Block): BatchElement {
+    const tx: TransactionResponse = block.transactions[0]
+    const txData: EIP155TxData = {
+      sig: {
+        v: '0x38',
+        r: '0x0fbef2080fadc4198ee0d6027e2eb70799d3418574cc085c34a14dcefe14d5d3',
+        s: '0x3bf394a7cb2aca6790e67382f782a406aefce7553212db52b54a4e087c2195ad',
+      },
+      gasLimit: 8000000,
+      gasPrice: 0,
+      nonce: 0,
+      target: '0x1111111111111111111111111111111111111111',
+      data: '0x1234',
+    }
+    this.log.debug('RETURNED CUSTOM TX:', txData)
+    return {
+      stateRoot: block.stateRoot,
+      isSequencerTx: true,
+      sequencerTxType: block.transactions[0].txType,
+      txData,
+      timestamp: block.timestamp,
+      blockNumber: block.transactions[0].l1BlockNumber,
+    }
   }
 
   private _getDefaultEcdsaTxBatchElement(block: L2Block): BatchElement {
