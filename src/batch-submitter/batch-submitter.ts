@@ -158,7 +158,7 @@ export abstract class BatchSubmitter {
     const promises = [...receiptPromises, sleepAndReturnResubmit(
       resubmissionTimeout
     )]
-    const val = await bPromise.any(promises)
+    const val = await bPromise.any(Promise.resolve(promises))
 
     if (val === 'resubmit') {
       log.debug(`Tx resubmission timeout reached for hash: ${response.hash}; nonce: ${response.nonce}.
@@ -181,7 +181,7 @@ export abstract class BatchSubmitter {
         log
       )
     } else {
-      return val
+      return val as TransactionReceipt
     }
   }
 
