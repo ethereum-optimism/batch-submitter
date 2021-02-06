@@ -91,6 +91,7 @@ const AUTO_FIX_BATCH_OPTIONS_CONF = env.AUTO_FIX_BATCH_OPTIONS_CONF
 const autoFixBatchOptions: AutoFixBatchOptions = {
   fixDoublePlayedDeposits: (AUTO_FIX_BATCH_OPTIONS_CONF) ? AUTO_FIX_BATCH_OPTIONS_CONF.includes('fixDoublePlayedDeposits') : false,
   fixDelayedTimestampAndBlockNumberHardcoded: (AUTO_FIX_BATCH_OPTIONS_CONF) ? AUTO_FIX_BATCH_OPTIONS_CONF.includes('fixDelayedTimestampAndBlockNumberHardcoded') : false,
+  fixBlock11767088: (AUTO_FIX_BATCH_OPTIONS_CONF) ? AUTO_FIX_BATCH_OPTIONS_CONF.includes('fixBlock11767088') : false,
 }
 
 export const run = async () => {

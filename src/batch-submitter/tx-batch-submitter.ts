@@ -38,6 +38,7 @@ import { RollupInfo, Range, BatchSubmitter, BLOCK_OFFSET } from '.'
 export interface AutoFixBatchOptions {
   fixDoublePlayedDeposits: boolean
   fixDelayedTimestampAndBlockNumberHardcoded: boolean
+  fixBlock11767088: boolean
 }
 
 export class TransactionBatchSubmitter extends BatchSubmitter {
@@ -63,7 +64,8 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     disableQueueBatchAppend: boolean,
     autoFixBatchOptions: AutoFixBatchOptions = {
       fixDoublePlayedDeposits: false,
-      fixDelayedTimestampAndBlockNumberHardcoded: false
+      fixDelayedTimestampAndBlockNumberHardcoded: false,
+      fixBlock11767088: false
     }, // TODO: Remove this
   ) {
     super(
@@ -355,11 +357,34 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       return fixedBatch
     }
 
+    const fixBlock11767088 = async (b: Batch): Promise<Batch> => {
+      // These just so happen to be a block number & timestamp that we are stuck at & so
+      // to get unstuck use these values.
+      const badBlockNumber = 11767088
+      const goodBlockNumber = 11767090
+      const fixedBatch: Batch = []
+      for (const ele of b) {
+        if (ele.blockNumber === badBlockNumber) {
+          this.log.warn('Fixing block 11767088!')
+          fixedBatch.push({
+            ...ele,
+            blockNumber: goodBlockNumber
+          })
+          continue
+        }
+        fixedBatch.push(ele)
+      }
+      return fixedBatch
+    }
+
     if (this.autoFixBatchOptions.fixDoublePlayedDeposits) {
       batch = await fixDoublePlayedDeposits(batch)
     }
     if (this.autoFixBatchOptions.fixDelayedTimestampAndBlockNumberHardcoded) {
       batch = await fixDelayedTimestampAndBlockNumberHardcoded(batch)
+    }
+    if (this.autoFixBatchOptions.fixBlock11767088) {
+      batch = await fixBlock11767088(batch)
     }
     return batch
   }
