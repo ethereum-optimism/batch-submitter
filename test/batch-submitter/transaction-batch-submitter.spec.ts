@@ -2,7 +2,9 @@ import { expect } from '../setup'
 
 /* External Imports */
 import { ethers } from '@nomiclabs/buidler'
+import ganache from 'ganache-core'
 import { Signer, ContractFactory, Contract } from 'ethers'
+import { Web3Provider, JsonRpcProvider } from '@ethersproject/providers'
 import { getContractInterface } from '@eth-optimism/contracts'
 import { smockit, MockContract } from '@eth-optimism/smock'
 import { remove0x, getLogger } from '@eth-optimism/core-utils'
@@ -23,14 +25,15 @@ import {
   TransactionBatchSubmitter,
   Signature,
   TX_BATCH_SUBMITTER_LOG_TAG,
+  BatchSubmitter,
 } from '../../src'
 
 const DECOMPRESSION_ADDRESS = '0x4200000000000000000000000000000000000008'
 const MAX_GAS_LIMIT = 8_000_000
 const MAX_TX_SIZE = 100_000
 const MIN_TX_SIZE = 1_000
-const MIN_GAS_PRICE = 1
-const MAX_GAS_PRICE = 70
+const MIN_GAS_PRICE_IN_GWEI = 1
+const MAX_GAS_PRICE_IN_GWEI = 70
 const GAS_RETRY_INCREMENT = 5
 const RECEIPT_TIMEOUT = 20 * 60 * 10_000
 
@@ -159,8 +162,8 @@ describe('TransactionBatchSubmitter', () => {
         100000,
         false,
         1,
-        MIN_GAS_PRICE,
-        MAX_GAS_PRICE,
+        MIN_GAS_PRICE_IN_GWEI,
+        MAX_GAS_PRICE_IN_GWEI,
         GAS_RETRY_INCREMENT,
         RECEIPT_TIMEOUT,
         getLogger(TX_BATCH_SUBMITTER_LOG_TAG),
@@ -265,8 +268,8 @@ describe('TransactionBatchSubmitter', () => {
         100000,
         false,
         1,
-        MIN_GAS_PRICE,
-        MAX_GAS_PRICE,
+        MIN_GAS_PRICE_IN_GWEI,
+        MAX_GAS_PRICE_IN_GWEI,
         GAS_RETRY_INCREMENT,
         RECEIPT_TIMEOUT,
         getLogger(TX_BATCH_SUBMITTER_LOG_TAG),
@@ -292,9 +295,68 @@ describe('TransactionBatchSubmitter', () => {
       // The receipt should NOT be undefined because that means it successfully submitted!
       expect(receipt).to.not.be.undefined
     })
+  })
+})
 
-    // TODO(annieke): write test by turning off hardhat automining
-    // it('should resubmit if tx hangs from low gas', async () => {
-    // })
+describe('TransactionBatchSubmitter to Ganache', () => {
+  let signer
+  const server = ganache.server({
+    default_balance_ether: 420,
+    blockTime: 2_000
+  })
+  const provider = new Web3Provider(ganache.provider())
+
+  before(async () => {
+    await server.listen(3001)
+    signer = await provider.getSigner()
+  })
+
+  after(async () => {
+    await server.close()
+  })
+
+  // only write test for getReceiptWithResubmission
+  it('should resubmit a transaction if it is not confirmed', async () => {
+    let firstGasPrice
+    const numConfirmations = 2
+    const sendTxFunc = async (gasPrice) => {
+      // only set firstGasPrice when it's undefined
+      firstGasPrice = firstGasPrice === undefined ? gasPrice : firstGasPrice
+
+      // console.debug(`retried gasPrice: ${gasPrice}`)
+      const tx = signer.sendTransaction({
+        to: DECOMPRESSION_ADDRESS,
+        value: 88,
+        nonce: 0,
+        gasPrice
+      })
+
+      // try mining a block every time a transaction is submitted
+      await provider.send('evm_mine', [])
+
+      const response = await tx
+
+      return signer.provider.waitForTransaction(
+        response.hash,
+        numConfirmations,
+        100_000
+      )
+    }
+
+    const resubmissionConfig = {
+      numConfirmations,
+      resubmissionTimeout: 1_000, // retry every second
+      minGasPriceInGwei: 0,
+      maxGasPriceInGwei: 100,
+      gasRetryIncrement: 5
+    }
+
+    const receipt = await BatchSubmitter.getReceiptWithResubmission(
+      sendTxFunc,
+      resubmissionConfig,
+      getLogger(TX_BATCH_SUBMITTER_LOG_TAG)
+    )
+
+    expect(receipt.gasUsed.toNumber()).to.be.greaterThan(firstGasPrice)
   })
 })

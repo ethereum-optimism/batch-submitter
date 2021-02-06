@@ -81,10 +81,10 @@ const requiredEnvVars: RequiredEnvVars = {
 const env = process.env
 const FRAUD_SUBMISSION_ADDRESS = env.FRAUD_SUBMISSION_ADDRESS || 'no fraud'
 const DISABLE_QUEUE_BATCH_APPEND = !!env.DISABLE_QUEUE_BATCH_APPEND
-const MIN_GAS_PRICE = parseInt(env.MIN_GAS_PRICE, 10) || 1
-const MAX_GAS_PRICE = parseInt(env.MAX_GAS_PRICE, 10) || 70
+const MIN_GAS_PRICE_IN_GWEI = parseInt(env.MIN_GAS_PRICE_IN_GWEI, 10) || 0
+const MAX_GAS_PRICE_IN_GWEI = parseInt(env.MAX_GAS_PRICE_IN_GWEI, 10) || 70
 const GAS_RETRY_INCREMENT = parseInt(env.GAS_RETRY_INCREMENT, 10) || 5
-const RECEIPT_TIMEOUT = parseInt(env.RECEIPT_TIMEOUT, 10) || 20 * 60 * 1_000 // 20 minutes
+const RECEIPT_TIMEOUT = parseInt(env.RECEIPT_TIMEOUT, 10) || 180 * 60 * 1_000 // 3 hrs
 // The private key that will be used to submit tx and state batches.
 const SEQUENCER_PRIVATE_KEY = env.SEQUENCER_PRIVATE_KEY
 const MNEMONIC = env.MNEMONIC
@@ -136,8 +136,8 @@ export const run = async () => {
     parseInt(requiredEnvVars.RESUBMISSION_TIMEOUT, 10) * 1_000,
     true,
     parseFloat(requiredEnvVars.SAFE_MINIMUM_ETHER_BALANCE),
-    MIN_GAS_PRICE,
-    MAX_GAS_PRICE,
+    MIN_GAS_PRICE_IN_GWEI,
+    MAX_GAS_PRICE_IN_GWEI,
     GAS_RETRY_INCREMENT,
     RECEIPT_TIMEOUT,
     getLogger(TX_BATCH_SUBMITTER_LOG_TAG),
@@ -156,8 +156,8 @@ export const run = async () => {
     parseInt(requiredEnvVars.FINALITY_CONFIRMATIONS, 10),
     true,
     parseFloat(requiredEnvVars.SAFE_MINIMUM_ETHER_BALANCE),
-    MIN_GAS_PRICE,
-    MAX_GAS_PRICE,
+    MIN_GAS_PRICE_IN_GWEI,
+    MAX_GAS_PRICE_IN_GWEI,
     GAS_RETRY_INCREMENT,
     RECEIPT_TIMEOUT,
     getLogger(STATE_BATCH_SUBMITTER_LOG_TAG),
@@ -190,14 +190,14 @@ export const run = async () => {
                 parseInt(requiredEnvVars.NUM_CONFIRMATIONS, 10),
                 RECEIPT_TIMEOUT
               )
-          }
+            }
             log.info(`Submitting transaction with nonce: ${i}`)
 
             const resubmissionConfig = {
               numConfirmations: parseInt(requiredEnvVars.NUM_CONFIRMATIONS, 10),
               resubmissionTimeout: 60 * 1_000,  // Attempt resubmission every 60 seconds
-              minGasPrice: MIN_GAS_PRICE,
-              maxGasPrice: MAX_GAS_PRICE,
+              minGasPriceInGwei: MIN_GAS_PRICE_IN_GWEI,
+              maxGasPriceInGwei: MAX_GAS_PRICE_IN_GWEI,
               gasRetryIncrement: GAS_RETRY_INCREMENT
             }
             await BatchSubmitter.getReceiptWithResubmission(

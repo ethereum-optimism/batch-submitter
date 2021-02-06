@@ -32,8 +32,8 @@ export interface Range {
 }
 export interface ResubmissionConfig {
   resubmissionTimeout: number,
-  minGasPrice: number,
-  maxGasPrice: number,
+  minGasPriceInGwei: number,
+  maxGasPriceInGwei: number,
   gasRetryIncrement: number
 }
 
@@ -56,8 +56,8 @@ export abstract class BatchSubmitter {
     readonly finalityConfirmations: number,
     readonly pullFromAddressManager: boolean,
     readonly minBalanceEther: number,
-    readonly minGasPrice: number,
-    readonly maxGasPrice: number,
+    readonly minGasPriceInGwei: number,
+    readonly maxGasPriceInGwei: number,
     readonly gasRetryIncrement: number,
     readonly receiptTimeout: number,
     readonly log: Logger
@@ -157,15 +157,17 @@ export abstract class BatchSubmitter {
   ): Promise<TransactionReceipt> {
     const {
       resubmissionTimeout,
-      minGasPrice,
-      maxGasPrice,
+      minGasPriceInGwei,
+      maxGasPriceInGwei,
       gasRetryIncrement
     } = resubmissionConfig
 
     const receipt = await ynatm.send({
         sendTransactionFunction: txFunc,
-        minGasPrice,
-        maxGasPrice,
+        minGasPrice: ynatm.toGwei(minGasPriceInGwei),
+        // minGasPriceInGwei,
+        maxGasPrice: ynatm.toGwei(maxGasPriceInGwei),
+        // maxGasPriceInGwei,
         gasPriceScalingFunction: ynatm.LINEAR(gasRetryIncrement),
         delay: resubmissionTimeout
       });
@@ -184,8 +186,8 @@ export abstract class BatchSubmitter {
 
     const resubmissionConfig: ResubmissionConfig = {
       resubmissionTimeout: this.resubmissionTimeout,
-      minGasPrice: this.minGasPrice,
-      maxGasPrice: this.maxGasPrice,
+      minGasPriceInGwei: this.minGasPriceInGwei,
+      maxGasPriceInGwei: this.maxGasPriceInGwei,
       gasRetryIncrement: this.gasRetryIncrement
     }
 

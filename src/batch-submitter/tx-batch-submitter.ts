@@ -53,8 +53,8 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     resubmissionTimeout: number,
     pullFromAddressManager: boolean,
     minBalanceEther: number,
-    minGasPrice: number,
-    maxGasPrice: number,
+    minGasPriceInGwei: number,
+    maxGasPriceInGwei: number,
     gasRetryIncrement: number,
     receiptTimeout: number,
     log: Logger,
@@ -72,8 +72,8 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       0,  // Supply dummy value because it is not used.
       pullFromAddressManager,
       minBalanceEther,
-      minGasPrice,
-      maxGasPrice,
+      minGasPriceInGwei,
+      maxGasPriceInGwei,
       gasRetryIncrement,
       receiptTimeout,
       log
