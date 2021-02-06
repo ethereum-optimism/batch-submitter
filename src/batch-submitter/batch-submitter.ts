@@ -181,7 +181,7 @@ export abstract class BatchSubmitter {
         log
       )
     } else {
-      return <TransactionReceipt>val
+      return val as TransactionReceipt
     }
   }
 
