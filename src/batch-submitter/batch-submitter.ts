@@ -165,9 +165,7 @@ export abstract class BatchSubmitter {
     const receipt = await ynatm.send({
         sendTransactionFunction: txFunc,
         minGasPrice: ynatm.toGwei(minGasPriceInGwei),
-        // minGasPriceInGwei,
         maxGasPrice: ynatm.toGwei(maxGasPriceInGwei),
-        // maxGasPriceInGwei,
         gasPriceScalingFunction: ynatm.LINEAR(gasRetryIncrement),
         delay: resubmissionTimeout
       });

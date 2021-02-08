@@ -315,24 +315,21 @@ describe('TransactionBatchSubmitter to Ganache', () => {
     await server.close()
   })
 
-  // only write test for getReceiptWithResubmission
+  // Unit test for getReceiptWithResubmission function,
+  // tests for increasing gas price on resubmission
   it('should resubmit a transaction if it is not confirmed', async () => {
-    let firstGasPrice
+    const gasPrices = []
     const numConfirmations = 2
     const sendTxFunc = async (gasPrice) => {
-      // only set firstGasPrice when it's undefined
-      firstGasPrice = firstGasPrice === undefined ? gasPrice : firstGasPrice
+      // push the retried gasPrice
+      gasPrices.push(gasPrice)
 
-      // console.debug(`retried gasPrice: ${gasPrice}`)
       const tx = signer.sendTransaction({
         to: DECOMPRESSION_ADDRESS,
         value: 88,
         nonce: 0,
         gasPrice
       })
-
-      // try mining a block every time a transaction is submitted
-      await provider.send('evm_mine', [])
 
       const response = await tx
 
@@ -351,12 +348,23 @@ describe('TransactionBatchSubmitter to Ganache', () => {
       gasRetryIncrement: 5
     }
 
-    const receipt = await BatchSubmitter.getReceiptWithResubmission(
+    BatchSubmitter.getReceiptWithResubmission(
       sendTxFunc,
       resubmissionConfig,
       getLogger(TX_BATCH_SUBMITTER_LOG_TAG)
     )
 
-    expect(receipt.gasUsed.toNumber()).to.be.greaterThan(firstGasPrice)
+    // Wait 1.5s for at least 1 retry
+    await new Promise((r) => setTimeout(r, 1500))
+
+    // Iterate through gasPrices to ensure each entry increases from
+    // the last
+    const isIncreasing = gasPrices.reduce(
+      (isInc, gasPrice, i, gP) => isInc && gasPrice > gP[i - 1] || Number.NEGATIVE_INFINITY,
+      true
+    )
+
+    expect(gasPrices).to.have.lengthOf.above(1) // retried at least once
+    expect(isIncreasing).to.be.true
   })
 })
