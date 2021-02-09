@@ -34,7 +34,6 @@ export class StateBatchSubmitter extends BatchSubmitter {
     minGasPriceInGwei: number,
     maxGasPriceInGwei: number,
     gasRetryIncrement: number,
-    receiptTimeout: number,
     log: Logger,
     fraudSubmissionAddress: string
   ) {
@@ -53,7 +52,6 @@ export class StateBatchSubmitter extends BatchSubmitter {
       minGasPriceInGwei,
       maxGasPriceInGwei,
       gasRetryIncrement,
-      receiptTimeout,
       log
     )
     this.fraudSubmissionAddress = fraudSubmissionAddress
@@ -152,8 +150,7 @@ export class StateBatchSubmitter extends BatchSubmitter {
       const contractTx = await this.chainContract.appendStateBatch(batch, offsetStartsAtIndex, {gasPrice})
       return this.signer.provider.waitForTransaction(
         contractTx.hash,
-        this.numConfirmations,
-        this.receiptTimeout
+        this.numConfirmations
       )
     }
     return this._submitAndLogTx(

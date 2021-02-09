@@ -59,7 +59,6 @@ export abstract class BatchSubmitter {
     readonly minGasPriceInGwei: number,
     readonly maxGasPriceInGwei: number,
     readonly gasRetryIncrement: number,
-    readonly receiptTimeout: number,
     readonly log: Logger
   ) {}
 

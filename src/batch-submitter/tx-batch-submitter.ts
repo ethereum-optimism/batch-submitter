@@ -56,7 +56,6 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     minGasPriceInGwei: number,
     maxGasPriceInGwei: number,
     gasRetryIncrement: number,
-    receiptTimeout: number,
     log: Logger,
     disableQueueBatchAppend: boolean
   ) {
@@ -75,7 +74,6 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       minGasPriceInGwei,
       maxGasPriceInGwei,
       gasRetryIncrement,
-      receiptTimeout,
       log
     )
     this.disableQueueBatchAppend = disableQueueBatchAppend
@@ -132,8 +130,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
           const tx = await this.chainContract.appendQueueBatch(99999999, {gasPrice})
           return this.signer.provider.waitForTransaction(
             tx.hash,
-            this.numConfirmations,
-            this.receiptTimeout
+            this.numConfirmations
           )
         }
 
@@ -215,8 +212,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       const tx = await this.chainContract.appendSequencerBatch(batchParams, {gasPrice})
       return this.signer.provider.waitForTransaction(
         tx.hash,
-        this.numConfirmations,
-        this.receiptTimeout
+        this.numConfirmations
       )
     }
     return this._submitAndLogTx(

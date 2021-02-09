@@ -84,7 +84,6 @@ const DISABLE_QUEUE_BATCH_APPEND = !!env.DISABLE_QUEUE_BATCH_APPEND
 const MIN_GAS_PRICE_IN_GWEI = parseInt(env.MIN_GAS_PRICE_IN_GWEI, 10) || 0
 const MAX_GAS_PRICE_IN_GWEI = parseInt(env.MAX_GAS_PRICE_IN_GWEI, 10) || 70
 const GAS_RETRY_INCREMENT = parseInt(env.GAS_RETRY_INCREMENT, 10) || 5
-const RECEIPT_TIMEOUT = parseInt(env.RECEIPT_TIMEOUT, 10) || 180 * 60 * 1_000 // 3 hrs
 // The private key that will be used to submit tx and state batches.
 const SEQUENCER_PRIVATE_KEY = env.SEQUENCER_PRIVATE_KEY
 const MNEMONIC = env.MNEMONIC
@@ -139,7 +138,6 @@ export const run = async () => {
     MIN_GAS_PRICE_IN_GWEI,
     MAX_GAS_PRICE_IN_GWEI,
     GAS_RETRY_INCREMENT,
-    RECEIPT_TIMEOUT,
     getLogger(TX_BATCH_SUBMITTER_LOG_TAG),
     DISABLE_QUEUE_BATCH_APPEND
   )
@@ -159,7 +157,6 @@ export const run = async () => {
     MIN_GAS_PRICE_IN_GWEI,
     MAX_GAS_PRICE_IN_GWEI,
     GAS_RETRY_INCREMENT,
-    RECEIPT_TIMEOUT,
     getLogger(STATE_BATCH_SUBMITTER_LOG_TAG),
     FRAUD_SUBMISSION_ADDRESS
   )
@@ -184,8 +181,7 @@ export const run = async () => {
             log.info(`Submitting transaction with nonce: ${i}; hash: ${response.hash}`)
             await sequencerSigner.provider.waitForTransaction(
               response.hash,
-              parseInt(requiredEnvVars.NUM_CONFIRMATIONS, 10),
-              RECEIPT_TIMEOUT
+              parseInt(requiredEnvVars.NUM_CONFIRMATIONS, 10)
             )
           }
         }
