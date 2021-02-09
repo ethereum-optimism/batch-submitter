@@ -176,34 +176,16 @@ export const run = async () => {
         if (pendingTxs > latestTxs) {
           log.info('Detected pending transactions. Clearing all transactions!')
           for (let i = latestTxs; i < pendingTxs; i++) {
-            const seqSignerAddress = await sequencerSigner.getAddress()
-            const sendTxFunction = async (gasPrice) => {
-              const tx = sequencerSigner.sendTransaction({
-                to: seqSignerAddress,
-                value: 0,
-                nonce: i,
-                gasPrice
-              })
-              const response = await tx
-              return this.signer.provider.waitForTransaction(
-                response.hash,
-                parseInt(requiredEnvVars.NUM_CONFIRMATIONS, 10),
-                RECEIPT_TIMEOUT
-              )
-            }
-            log.info(`Submitting transaction with nonce: ${i}`)
-
-            const resubmissionConfig = {
-              numConfirmations: parseInt(requiredEnvVars.NUM_CONFIRMATIONS, 10),
-              resubmissionTimeout: 60 * 1_000,  // Attempt resubmission every 60 seconds
-              minGasPriceInGwei: MIN_GAS_PRICE_IN_GWEI,
-              maxGasPriceInGwei: MAX_GAS_PRICE_IN_GWEI,
-              gasRetryIncrement: GAS_RETRY_INCREMENT
-            }
-            await BatchSubmitter.getReceiptWithResubmission(
-              sendTxFunction,
-              resubmissionConfig,
-              log,
+            const response = await sequencerSigner.sendTransaction({
+              to: await sequencerSigner.getAddress(),
+              value: 0,
+              nonce: i,
+            })
+            log.info(`Submitting transaction with nonce: ${i}; hash: ${response.hash}`)
+            await sequencerSigner.provider.waitForTransaction(
+              response.hash,
+              parseInt(requiredEnvVars.NUM_CONFIRMATIONS, 10),
+              RECEIPT_TIMEOUT
             )
           }
         }
