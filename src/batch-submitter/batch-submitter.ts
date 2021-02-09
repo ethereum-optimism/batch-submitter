@@ -57,6 +57,7 @@ export abstract class BatchSubmitter {
     readonly minGasPriceInGwei: number,
     readonly maxGasPriceInGwei: number,
     readonly gasRetryIncrement: number,
+    readonly gasThresholdInGwei: number,
     readonly log: Logger
   ) {}
 

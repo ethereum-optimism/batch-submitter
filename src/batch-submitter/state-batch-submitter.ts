@@ -34,6 +34,7 @@ export class StateBatchSubmitter extends BatchSubmitter {
     minGasPriceInGwei: number,
     maxGasPriceInGwei: number,
     gasRetryIncrement: number,
+    gasThresholdInGwei: number,
     log: Logger,
     fraudSubmissionAddress: string
   ) {
@@ -52,6 +53,7 @@ export class StateBatchSubmitter extends BatchSubmitter {
       minGasPriceInGwei,
       maxGasPriceInGwei,
       gasRetryIncrement,
+      gasThresholdInGwei,
       log
     )
     this.fraudSubmissionAddress = fraudSubmissionAddress
