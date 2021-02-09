@@ -53,6 +53,9 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     resubmissionTimeout: number,
     pullFromAddressManager: boolean,
     minBalanceEther: number,
+    minGasPriceInGwei: number,
+    maxGasPriceInGwei: number,
+    gasRetryIncrement: number,
     log: Logger,
     disableQueueBatchAppend: boolean
   ) {
@@ -68,6 +71,9 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       0,  // Supply dummy value because it is not used.
       pullFromAddressManager,
       minBalanceEther,
+      minGasPriceInGwei,
+      maxGasPriceInGwei,
+      gasRetryIncrement,
       log
     )
     this.disableQueueBatchAppend = disableQueueBatchAppend
@@ -120,9 +126,17 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       )
 
       if (!this.disableQueueBatchAppend) {
+        const contractFunction = async (gasPrice): Promise<TransactionReceipt> => {
+          const tx = await this.chainContract.appendQueueBatch(99999999, {gasPrice})
+          return this.signer.provider.waitForTransaction(
+            tx.hash,
+            this.numConfirmations
+          )
+        }
+
         // Empty the queue with a huge `appendQueueBatch(..)` call
         return this._submitAndLogTx(
-          this.chainContract.appendQueueBatch(99999999),
+          contractFunction,
           'Cleared queue!'
         )
       }
@@ -193,8 +207,16 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       return
     }
     this.log.debug('Submitting batch. Tx calldata:', batchParams)
+
+    const contractFunction = async (gasPrice): Promise<TransactionReceipt> => {
+      const tx = await this.chainContract.appendSequencerBatch(batchParams, {gasPrice})
+      return this.signer.provider.waitForTransaction(
+        tx.hash,
+        this.numConfirmations
+      )
+    }
     return this._submitAndLogTx(
-      this.chainContract.appendSequencerBatch(batchParams),
+      contractFunction,
       'Submitted batch!'
     )
   }

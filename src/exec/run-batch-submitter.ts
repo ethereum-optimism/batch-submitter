@@ -81,6 +81,9 @@ const requiredEnvVars: RequiredEnvVars = {
 const env = process.env
 const FRAUD_SUBMISSION_ADDRESS = env.FRAUD_SUBMISSION_ADDRESS || 'no fraud'
 const DISABLE_QUEUE_BATCH_APPEND = !!env.DISABLE_QUEUE_BATCH_APPEND
+const MIN_GAS_PRICE_IN_GWEI = parseInt(env.MIN_GAS_PRICE_IN_GWEI, 10) || 0
+const MAX_GAS_PRICE_IN_GWEI = parseInt(env.MAX_GAS_PRICE_IN_GWEI, 10) || 70
+const GAS_RETRY_INCREMENT = parseInt(env.GAS_RETRY_INCREMENT, 10) || 5
 // The private key that will be used to submit tx and state batches.
 const SEQUENCER_PRIVATE_KEY = env.SEQUENCER_PRIVATE_KEY
 const MNEMONIC = env.MNEMONIC
@@ -132,6 +135,9 @@ export const run = async () => {
     parseInt(requiredEnvVars.RESUBMISSION_TIMEOUT, 10) * 1_000,
     true,
     parseFloat(requiredEnvVars.SAFE_MINIMUM_ETHER_BALANCE),
+    MIN_GAS_PRICE_IN_GWEI,
+    MAX_GAS_PRICE_IN_GWEI,
+    GAS_RETRY_INCREMENT,
     getLogger(TX_BATCH_SUBMITTER_LOG_TAG),
     DISABLE_QUEUE_BATCH_APPEND
   )
@@ -148,6 +154,9 @@ export const run = async () => {
     parseInt(requiredEnvVars.FINALITY_CONFIRMATIONS, 10),
     true,
     parseFloat(requiredEnvVars.SAFE_MINIMUM_ETHER_BALANCE),
+    MIN_GAS_PRICE_IN_GWEI,
+    MAX_GAS_PRICE_IN_GWEI,
+    GAS_RETRY_INCREMENT,
     getLogger(STATE_BATCH_SUBMITTER_LOG_TAG),
     FRAUD_SUBMISSION_ADDRESS
   )
@@ -170,13 +179,9 @@ export const run = async () => {
               nonce: i,
             })
             log.info(`Submitting transaction with nonce: ${i}; hash: ${response.hash}`)
-            await BatchSubmitter.getReceiptWithResubmission(
-              response,
-              [],
-              sequencerSigner,
-              parseInt(requiredEnvVars.NUM_CONFIRMATIONS, 10),
-              60 * 1_000,  // Attempt resubmission every 60 seconds
-              log,
+            await sequencerSigner.provider.waitForTransaction(
+              response.hash,
+              parseInt(requiredEnvVars.NUM_CONFIRMATIONS, 10)
             )
           }
         }

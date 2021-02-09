@@ -4,7 +4,7 @@ import {
   TransactionResponse,
   TransactionReceipt,
 } from '@ethersproject/abstract-provider'
-import { Promise as bPromise } from 'bluebird'
+import * as ynatm from 'ynatm'
 import { Logger } from '@eth-optimism/core-utils'
 import { OptimismProvider } from '@eth-optimism/provider'
 import { getContractFactory } from '@eth-optimism/contracts'
@@ -30,6 +30,12 @@ export interface Range {
   start: number
   end: number
 }
+export interface ResubmissionConfig {
+  resubmissionTimeout: number,
+  minGasPriceInGwei: number,
+  maxGasPriceInGwei: number,
+  gasRetryIncrement: number
+}
 
 export abstract class BatchSubmitter {
   protected rollupInfo: RollupInfo
@@ -50,6 +56,9 @@ export abstract class BatchSubmitter {
     readonly finalityConfirmations: number,
     readonly pullFromAddressManager: boolean,
     readonly minBalanceEther: number,
+    readonly minGasPriceInGwei: number,
+    readonly maxGasPriceInGwei: number,
+    readonly gasRetryIncrement: number,
     readonly log: Logger
   ) {}
 
@@ -141,66 +150,50 @@ export abstract class BatchSubmitter {
   }
 
   public static async getReceiptWithResubmission(
-    response: TransactionResponse,
-    receiptPromises: Array<Promise<TransactionReceipt>>,
-    signer: Signer,
-    numConfirmations: number,
-    resubmissionTimeout: number,
+    txFunc: (gasPrice) => Promise<TransactionReceipt>,
+    resubmissionConfig: ResubmissionConfig,
     log: Logger,
   ): Promise<TransactionReceipt> {
-    const receiptPromise = response.wait(numConfirmations)
-    receiptPromises.push(receiptPromise)
-    // Wait for the tx & if it takes too long resubmit
-    const sleepAndReturnResubmit = async (timeout: number) => {
-      await new Promise((r) => setTimeout(r, timeout))
-      return 'resubmit'
-    }
-    const promises = [...receiptPromises, sleepAndReturnResubmit(
-      resubmissionTimeout
-    )]
-    const val = await bPromise.any(promises)
+    const {
+      resubmissionTimeout,
+      minGasPriceInGwei,
+      maxGasPriceInGwei,
+      gasRetryIncrement
+    } = resubmissionConfig
 
-    if (val === 'resubmit') {
-      log.debug(`Tx resubmission timeout reached for hash: ${response.hash}; nonce: ${response.nonce}.
-                Resubmitting tx...`)
-      const tx = {
-        to: response.to,
-        data: response.data,
-        nonce: response.nonce,
-        value: response.value,
-        gasLimit: response.gasLimit,
-      }
-      const newRes = await signer.sendTransaction(tx)
-      log.debug('Resubmission tx response:', newRes)
-      return BatchSubmitter.getReceiptWithResubmission(
-        newRes,
-        receiptPromises,
-        signer,
-        numConfirmations,
-        resubmissionTimeout,
-        log
-      )
-    } else {
-      return val
-    }
+    const receipt = await ynatm.send({
+        sendTransactionFunction: txFunc,
+        minGasPrice: ynatm.toGwei(minGasPriceInGwei),
+        maxGasPrice: ynatm.toGwei(maxGasPriceInGwei),
+        gasPriceScalingFunction: ynatm.LINEAR(gasRetryIncrement),
+        delay: resubmissionTimeout
+      });
+
+    log.debug('Resubmission tx receipt:', receipt)
+
+    return receipt
   }
 
   protected async _submitAndLogTx(
-    txPromise: Promise<TransactionResponse>,
+    txFunc: (gasPrice) => Promise<TransactionReceipt>,
     successMessage: string
   ): Promise<TransactionReceipt> {
-    const response = await txPromise
     this.lastBatchSubmissionTimestamp = Date.now()
-    this.log.debug('Transaction response:', response)
     this.log.debug('Waiting for receipt...')
+
+    const resubmissionConfig: ResubmissionConfig = {
+      resubmissionTimeout: this.resubmissionTimeout,
+      minGasPriceInGwei: this.minGasPriceInGwei,
+      maxGasPriceInGwei: this.maxGasPriceInGwei,
+      gasRetryIncrement: this.gasRetryIncrement
+    }
+
     const receipt = await BatchSubmitter.getReceiptWithResubmission(
-      response,
-      [],
-      this.signer,
-      this.numConfirmations,
-      this.resubmissionTimeout,
+      txFunc,
+      resubmissionConfig,
       this.log
     )
+
     this.log.debug('Transaction receipt:', receipt)
     this.log.info(successMessage)
     return receipt
