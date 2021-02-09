@@ -176,11 +176,25 @@ export abstract class BatchSubmitter {
   }
 
   protected async _submitAndLogTx(
-    txFunc: (gasPrice) => Promise<TransactionReceipt>,
-    successMessage: string
+    contractFunction: Function,
+    params: any[],
+    successMessage: string,
   ): Promise<TransactionReceipt> {
     this.lastBatchSubmissionTimestamp = Date.now()
     this.log.debug('Waiting for receipt...')
+
+    const sendTransactionFunction = async (gasPrice): Promise<TransactionReceipt> => {
+      console.debug(contractFunction)
+      params.push(gasPrice)
+      const tx = await contractFunction(...params)
+      // const tx = await contractFunction(...params, {gasPrice})
+      console.debug(tx)
+      return this.signer.provider.waitForTransaction(
+        tx.hash,
+        this.numConfirmations,
+        this.receiptTimeout
+      )
+    }
 
     const resubmissionConfig: ResubmissionConfig = {
       resubmissionTimeout: this.resubmissionTimeout,
@@ -190,7 +204,7 @@ export abstract class BatchSubmitter {
     }
 
     const receipt = await BatchSubmitter.getReceiptWithResubmission(
-      txFunc,
+      sendTransactionFunction,
       resubmissionConfig,
       this.log
     )

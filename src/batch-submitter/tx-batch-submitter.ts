@@ -128,18 +128,19 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       )
 
       if (!this.disableQueueBatchAppend) {
-        const contractFunction = async (gasPrice): Promise<TransactionReceipt> => {
-          const tx = await this.chainContract.appendQueueBatch(99999999, {gasPrice})
-          return this.signer.provider.waitForTransaction(
-            tx.hash,
-            this.numConfirmations,
-            this.receiptTimeout
-          )
-        }
+        // const contractFunction = async (gasPrice): Promise<TransactionReceipt> => {
+        //   const tx = await this.chainContract.appendQueueBatch(99999999, {gasPrice})
+        //   return this.signer.provider.waitForTransaction(
+        //     tx.hash,
+        //     this.numConfirmations,
+        //     this.receiptTimeout
+        //   )
+        // }
 
         // Empty the queue with a huge `appendQueueBatch(..)` call
         return this._submitAndLogTx(
-          contractFunction,
+          this.chainContract.appendQueueBatch,
+          [99999999],
           'Cleared queue!'
         )
       }
@@ -211,16 +212,17 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     }
     this.log.debug('Submitting batch. Tx calldata:', batchParams)
 
-    const contractFunction = async (gasPrice): Promise<TransactionReceipt> => {
-      const tx = await this.chainContract.appendSequencerBatch(batchParams, {gasPrice})
-      return this.signer.provider.waitForTransaction(
-        tx.hash,
-        this.numConfirmations,
-        this.receiptTimeout
-      )
-    }
+    // const contractFunction = async (gasPrice): Promise<TransactionReceipt> => {
+    //   const tx = await this.chainContract.appendSequencerBatch(batchParams, {gasPrice})
+    //   return this.signer.provider.waitForTransaction(
+    //     tx.hash,
+    //     this.numConfirmations,
+    //     this.receiptTimeout
+    //   )
+    // }
     return this._submitAndLogTx(
-      contractFunction,
+      this.chainContract.appendSequencerBatch,
+      [batchParams],
       'Submitted batch!'
     )
   }
