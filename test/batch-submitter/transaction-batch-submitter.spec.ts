@@ -332,8 +332,7 @@ describe('TransactionBatchSubmitter to Ganache', () => {
 
       return signer.provider.waitForTransaction(
         response.hash,
-        numConfirmations,
-        100_000
+        numConfirmations
       )
     }
 
