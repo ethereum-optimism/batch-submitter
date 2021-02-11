@@ -253,7 +253,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     batch = await this._fixBatch(batch)
     if (!(await this._validateBatch(batch))) {
       this.log.error('Batch is malformed! Cannot submit next batch!')
-      throw (new Error('Batch is malformed! Cannot submit next batch!'))
+      throw new Error('Batch is malformed! Cannot submit next batch!')
     }
     let sequencerBatchParams = await this._getSequencerBatchParams(
       startBlock,
@@ -420,11 +420,6 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
         target: tx[3],
         data: tx[5]
       }
-      // Sleep two miliseconds to ensure that the signature is unique.
-      // I am generating the signature baseed on the hash of the current time
-      // so I'm using time as a kind of global nonce & just to make sure that
-      // no two signatures are the same I wait for 2 miliseconds explicitly.
-      await new Promise((r) => setTimeout(r, 2))
       return {
         stateRoot: queueElement.stateRoot,
         isSequencerTx: true,
