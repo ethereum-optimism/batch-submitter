@@ -174,6 +174,18 @@ export abstract class BatchSubmitter {
     return receipt
   }
 
+  private async _getMinGasPriceInGwei(): Promise<number> {
+    if (this.minGasPriceInGwei !== 0) {
+      return this.minGasPriceInGwei
+    }
+    let minGasPriceInGwei = ((await this.signer.getGasPrice()).div(1000000000)).toNumber() // convert to gwei
+    if (minGasPriceInGwei > this.maxGasPriceInGwei) {
+      this.log.warn('Minimum gas price is higher than max! Ethereum must be congested...')
+      minGasPriceInGwei = this.maxGasPriceInGwei
+    }
+    return minGasPriceInGwei
+  }
+
   protected async _submitAndLogTx(
     txFunc: (gasPrice) => Promise<TransactionReceipt>,
     successMessage: string
@@ -183,7 +195,7 @@ export abstract class BatchSubmitter {
 
     const resubmissionConfig: ResubmissionConfig = {
       resubmissionTimeout: this.resubmissionTimeout,
-      minGasPriceInGwei: this.minGasPriceInGwei,
+      minGasPriceInGwei: await this._getMinGasPriceInGwei(),
       maxGasPriceInGwei: this.maxGasPriceInGwei,
       gasRetryIncrement: this.gasRetryIncrement
     }
