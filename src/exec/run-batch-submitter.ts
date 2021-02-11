@@ -14,6 +14,7 @@ config()
 /* Internal Imports */
 import {
   TransactionBatchSubmitter,
+  AutoFixBatchOptions,
   BatchSubmitter,
   StateBatchSubmitter,
   STATE_BATCH_SUBMITTER_LOG_TAG,
@@ -88,6 +89,12 @@ const GAS_RETRY_INCREMENT = parseInt(env.GAS_RETRY_INCREMENT, 10) || 5
 const SEQUENCER_PRIVATE_KEY = env.SEQUENCER_PRIVATE_KEY
 const MNEMONIC = env.MNEMONIC
 const HD_PATH = env.HD_PATH
+// Auto fix batch options -- TODO: Remove this very hacky config
+const AUTO_FIX_BATCH_OPTIONS_CONF = env.AUTO_FIX_BATCH_OPTIONS_CONF
+const autoFixBatchOptions: AutoFixBatchOptions = {
+  fixDoublePlayedDeposits: (AUTO_FIX_BATCH_OPTIONS_CONF) ? AUTO_FIX_BATCH_OPTIONS_CONF.includes('fixDoublePlayedDeposits') : false,
+  fixDelayedTimestampAndBlockNumberHardcoded: (AUTO_FIX_BATCH_OPTIONS_CONF) ? AUTO_FIX_BATCH_OPTIONS_CONF.includes('fixDelayedTimestampAndBlockNumberHardcoded') : false,
+}
 
 export const run = async () => {
   log.info('Starting batch submitter...')
@@ -139,7 +146,8 @@ export const run = async () => {
     MAX_GAS_PRICE_IN_GWEI,
     GAS_RETRY_INCREMENT,
     getLogger(TX_BATCH_SUBMITTER_LOG_TAG),
-    DISABLE_QUEUE_BATCH_APPEND
+    DISABLE_QUEUE_BATCH_APPEND,
+    autoFixBatchOptions
   )
 
   const stateBatchSubmitter = new StateBatchSubmitter(

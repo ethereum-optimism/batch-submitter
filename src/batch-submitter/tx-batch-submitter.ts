@@ -1,5 +1,5 @@
 /* External Imports */
-import { BigNumber, Signer } from 'ethers'
+import { BigNumber, Signer, ethers, Wallet } from 'ethers'
 import {
   TransactionResponse,
   TransactionReceipt,
@@ -35,12 +35,18 @@ import {
 } from '..'
 import { RollupInfo, Range, BatchSubmitter, BLOCK_OFFSET } from '.'
 
+export interface AutoFixBatchOptions {
+  fixDoublePlayedDeposits: boolean
+  fixDelayedTimestampAndBlockNumberHardcoded: boolean
+}
+
 export class TransactionBatchSubmitter extends BatchSubmitter {
   protected chainContract: CanonicalTransactionChainContract
   protected l2ChainId: number
   protected syncing: boolean
   protected lastL1BlockNumber: number
   private disableQueueBatchAppend: boolean
+  private autoFixBatchOptions: AutoFixBatchOptions
 
   constructor(
     signer: Signer,
@@ -57,7 +63,11 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     maxGasPriceInGwei: number,
     gasRetryIncrement: number,
     log: Logger,
-    disableQueueBatchAppend: boolean
+    disableQueueBatchAppend: boolean,
+    autoFixBatchOptions: AutoFixBatchOptions = {
+      fixDoublePlayedDeposits: false,
+      fixDelayedTimestampAndBlockNumberHardcoded: false
+    }, // TODO: Remove this
   ) {
     super(
       signer,
@@ -77,6 +87,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       log
     )
     this.disableQueueBatchAppend = disableQueueBatchAppend
+    this.autoFixBatchOptions = autoFixBatchOptions
   }
 
   /*****************************
@@ -233,10 +244,16 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     // For now we need to update our internal `lastL1BlockNumber` value
     // which is used when submitting batches.
     this._updateLastL1BlockNumber() // TODO: Remove this
-    const batch: Batch = []
+    let batch: Batch = []
     for (let i = startBlock; i < endBlock; i++) {
       this.log.debug(`Fetching L2BatchElement ${i}`)
       batch.push(await this._getL2BatchElement(i))
+    }
+    // Fix our batches if we are configured to. TODO: Remove this.
+    batch = await this._fixBatch(batch)
+    if (!(await this._validateBatch(batch))) {
+      this.log.error('Batch is malformed! Cannot submit next batch!')
+      throw new Error('Batch is malformed! Cannot submit next batch!')
     }
     let sequencerBatchParams = await this._getSequencerBatchParams(
       startBlock,
@@ -257,6 +274,166 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       wasBatchTruncated = true
     }
     return [sequencerBatchParams, wasBatchTruncated]
+  }
+
+  /**
+   * Returns true if the batch is valid.
+   */
+  protected async _validateBatch(batch: Batch): Promise<boolean> {
+    // Verify all of the queue elements are what we expect
+    let nextQueueIndex = await this.chainContract.getNextQueueIndex()
+    for (const ele of batch) {
+      this.log.debug('Verifying batch element:', ele)
+      if (!ele.isSequencerTx) {
+        this.log.debug(`Checking queue equality against L1 queue index: ${nextQueueIndex}`)
+        if (!(await this._doesQueueElementMatchL1(nextQueueIndex, ele))) {
+          return false
+        }
+        nextQueueIndex++
+      }
+    }
+
+    // Verify all of the batch elements are monotonic
+    let lastTimestamp: number
+    let lastBlockNumber: number
+    for (const ele of batch) {
+      if (ele.timestamp < lastTimestamp) {
+        this.log.error('Timestamp monotonicity violated! Element:', ele)
+        return false
+      }
+      if (ele.blockNumber < lastBlockNumber) {
+        this.log.error('Block Number monotonicity violated! Element:', ele)
+        return false
+      }
+      lastTimestamp = ele.timestamp
+      lastBlockNumber = ele.blockNumber
+    }
+    return true
+  }
+
+  private async _doesQueueElementMatchL1(queueIndex: number, queueElement: BatchElement): Promise<boolean> {
+    const logEqualityError = (name, index, expected, got) => {
+      this.log.error(name, 'mismatch | Index:', index, '| Expected:', expected, '| Received:', got)
+    }
+
+    let isEqual = true
+    const [queueEleHash, timestamp, blockNumber] = await this.chainContract.getQueueElement(queueIndex)
+
+    // TODO: Verify queue element hash equality. The queue element hash can be computed with:
+    // keccak256( abi.encode( msg.sender, _target, _gasLimit, _data))
+
+    // Check timestamp & blockNumber equality
+    if (timestamp !== queueElement.timestamp) {
+      isEqual = false
+      logEqualityError('Timestamp', queueIndex, timestamp, queueElement.timestamp)
+    }
+    if (blockNumber !== queueElement.blockNumber) {
+      isEqual = false
+      logEqualityError('Block Number', queueIndex, blockNumber, queueElement.blockNumber)
+    }
+    return isEqual
+  }
+
+  /**
+   * Takes in a batch which is potentially malformed & returns corrected version.
+   * Current fixes that are supported:
+   * - Double played deposits.
+   */
+  private async _fixBatch(batch: Batch): Promise<Batch> {
+    const fixDoublePlayedDeposits = async (b: Batch): Promise<Batch> => {
+      let nextQueueIndex = await this.chainContract.getNextQueueIndex()
+      const fixedBatch: Batch = []
+      for (const ele of b) {
+        if (!ele.isSequencerTx) {
+          if (!(await this._doesQueueElementMatchL1(nextQueueIndex, ele))) {
+            this.log.warn('Fixing double played queue element. Index:', nextQueueIndex)
+            fixedBatch.push(await this._fixQueueElement(nextQueueIndex, ele))
+            continue
+          }
+          nextQueueIndex++
+        }
+        fixedBatch.push(ele)
+      }
+      return fixedBatch
+    }
+
+    const fixDelayedTimestampAndBlockNumberHardcoded = async (b: Batch): Promise<Batch> => {
+      // These just so happen to be a block number & timestamp that we are stuck at & so
+      // to get unstuck use these values.
+      const earliestBlockNumber = 11734130
+      const earliestTimestamp = 1611700743
+      const fixedBatch: Batch = []
+      for (const ele of b) {
+        if (ele.timestamp < earliestTimestamp || ele.blockNumber < earliestBlockNumber) {
+          fixedBatch.push({
+            ...ele,
+            timestamp: earliestTimestamp,
+            blockNumber: earliestBlockNumber
+          })
+          continue
+        }
+        fixedBatch.push(ele)
+      }
+      return fixedBatch
+    }
+
+    if (this.autoFixBatchOptions.fixDoublePlayedDeposits) {
+      batch = await fixDoublePlayedDeposits(batch)
+    }
+    if (this.autoFixBatchOptions.fixDelayedTimestampAndBlockNumberHardcoded) {
+      batch = await fixDelayedTimestampAndBlockNumberHardcoded(batch)
+    }
+    return batch
+  }
+
+  private async _fixQueueElement(queueIndex: number, queueElement: BatchElement): Promise<BatchElement> {
+    const [queueEleHash, timestamp, blockNumber] = await this.chainContract.getQueueElement(queueIndex)
+
+    if (timestamp > queueElement.timestamp && blockNumber > queueElement.blockNumber) {
+      this.log.warn('Double deposit detected!!! Fixing by skipping the deposit & replacing with a dummy tx.')
+      // This implies that we've double played a deposit.
+      // We can correct this by instead submitting a dummy sequencer tx
+      const wallet = Wallet.createRandom()
+      const gasLimit = 8_000_000
+      const gasPrice = 0
+      const chainId = 10
+      const nonce = 0
+      const rawTx = await wallet.signTransaction({
+        gasLimit,
+        gasPrice,
+        chainId,
+        nonce,
+        to: '0x1111111111111111111111111111111111111111',
+        data: '0x1234'
+      })
+      // tx: [0nonce, 1gasprice, 2startgas, 3to, 4value, 5data, 6v, 7r, 8s]
+      const tx = ethers.utils.RLP.decode(rawTx)
+      const dummyTx: EIP155TxData = {
+        sig: {
+          v: tx[6],
+          r: tx[7],
+          s: tx[8],
+        },
+        gasLimit,
+        gasPrice,
+        nonce,
+        target: tx[3],
+        data: tx[5]
+      }
+      return {
+        stateRoot: queueElement.stateRoot,
+        isSequencerTx: true,
+        sequencerTxType: TxType.EIP155,
+        txData: dummyTx,
+        timestamp: queueElement.timestamp,
+        blockNumber: queueElement.blockNumber,
+      }
+    }
+    if (timestamp < queueElement.timestamp && blockNumber < queueElement.blockNumber) {
+      this.log.error('A deposit seems to have been skipped!')
+      throw new Error('Skipped deposit?!')
+    }
+    throw new Error('Unable to fix queue element!')
   }
 
   private async _getSequencerBatchParams(
@@ -338,7 +515,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
 
     return {
       // TODO: Remove BLOCK_OFFSET by adding a tx to Geth's genesis
-      shouldStartAtBatch: shouldStartAtIndex - BLOCK_OFFSET,
+      shouldStartAtElement: shouldStartAtIndex - BLOCK_OFFSET,
       totalElementsToAppend,
       contexts,
       transactions,

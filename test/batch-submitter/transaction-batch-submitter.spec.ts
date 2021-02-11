@@ -22,9 +22,10 @@ import {
   QueueOrigin,
   TxType,
   ctcCoder,
-  TransactionBatchSubmitter,
+  TransactionBatchSubmitter as RealTransactionBatchSubmitter,
   Signature,
   TX_BATCH_SUBMITTER_LOG_TAG,
+  Batch,
   BatchSubmitter,
 } from '../../src'
 
@@ -56,6 +57,12 @@ const DUMMY_SIG: Signature = {
   r: '11'.repeat(32),
   s: '22'.repeat(32),
   v: '01',
+}
+// A transaction batch submitter which skips the validate batch check
+class TransactionBatchSubmitter extends RealTransactionBatchSubmitter {
+  protected async _validateBatch(batch: Batch): Promise<boolean> {
+    return true
+  }
 }
 
 describe('TransactionBatchSubmitter', () => {

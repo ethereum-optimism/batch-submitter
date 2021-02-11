@@ -1,6 +1,6 @@
 /* External Imports */
 import { Contract, BigNumber } from 'ethers'
-import { TransactionResponse } from '@ethersproject/abstract-provider'
+import { TransactionResponse, TransactionRequest } from '@ethersproject/abstract-provider'
 import { keccak256 } from 'ethers/lib/utils'
 import { remove0x, encodeHex } from './utils'
 
@@ -12,7 +12,7 @@ export interface BatchContext {
 }
 
 export interface AppendSequencerBatchParams {
-  shouldStartAtBatch: number // 5 bytes -- starts at batch
+  shouldStartAtElement: number // 5 bytes -- starts at batch
   totalElementsToAppend: number // 3 bytes -- total_elements_to_append
   contexts: BatchContext[] // total_elements[fixed_size[]]
   transactions: string[] // total_size_bytes[],total_size_bytes[]
@@ -25,7 +25,7 @@ export interface AppendSequencerBatchParams {
 export class CanonicalTransactionChainContract extends Contract {
   public async appendSequencerBatch(
     batch: AppendSequencerBatchParams,
-    options?: any
+    options?: TransactionRequest
   ): Promise<TransactionResponse> {
     return appendSequencerBatch(this, batch, options)
   }
@@ -40,7 +40,7 @@ const APPEND_SEQUENCER_BATCH_METHOD_ID = 'appendSequencerBatch()'
 const appendSequencerBatch = async (
   OVM_CanonicalTransactionChain: Contract,
   batch: AppendSequencerBatchParams,
-  options?: any
+  options?: TransactionRequest
 ): Promise<TransactionResponse> => {
   const methodId = keccak256(
     Buffer.from(APPEND_SEQUENCER_BATCH_METHOD_ID)
@@ -56,7 +56,7 @@ const appendSequencerBatch = async (
 export const encodeAppendSequencerBatch = (
   b: AppendSequencerBatchParams
 ): string => {
-  const encodedShouldStartAtBatch = encodeHex(b.shouldStartAtBatch, 10)
+  const encodedShouldStartAtElement = encodeHex(b.shouldStartAtElement, 10)
   const encodedTotalElementsToAppend = encodeHex(b.totalElementsToAppend, 6)
 
   const encodedContextsHeader = encodeHex(b.contexts.length, 6)
@@ -74,7 +74,7 @@ export const encodeAppendSequencerBatch = (
     return acc + encodedTxDataHeader + remove0x(cur)
   }, '')
   return (
-    encodedShouldStartAtBatch +
+    encodedShouldStartAtElement +
     encodedTotalElementsToAppend +
     encodedContexts +
     encodedTransactionData
