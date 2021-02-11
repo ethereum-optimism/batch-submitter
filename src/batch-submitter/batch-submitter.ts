@@ -193,11 +193,9 @@ export abstract class BatchSubmitter {
     this.lastBatchSubmissionTimestamp = Date.now()
     this.log.debug('Waiting for receipt...')
 
-    const minGasPrice = await this._getMinGasPriceInGwei()
-
     const resubmissionConfig: ResubmissionConfig = {
       resubmissionTimeout: this.resubmissionTimeout,
-      minGasPriceInGwei: minGasPrice,
+      minGasPriceInGwei: await this._getMinGasPriceInGwei(),
       maxGasPriceInGwei: this.maxGasPriceInGwei,
       gasRetryIncrement: this.gasRetryIncrement
     }
