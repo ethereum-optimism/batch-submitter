@@ -181,7 +181,7 @@ export abstract class BatchSubmitter {
     this.lastBatchSubmissionTimestamp = Date.now()
     this.log.debug('Waiting for receipt...')
 
-    let minGasPrice = (this.minGasPriceInGwei)
+    let minGasPrice = (this.minGasPriceInGwei === 0)
       ? this.minGasPriceInGwei : ((await this.signer.getGasPrice()).div(1000000000)).toNumber() // convert to gwei
     if (minGasPrice < this.maxGasPriceInGwei) {
       this.log.warn('Minimum gas price is higher than max! Ethereum must be congested...')
