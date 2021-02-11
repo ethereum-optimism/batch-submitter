@@ -31,6 +31,9 @@ export class StateBatchSubmitter extends BatchSubmitter {
     finalityConfirmations: number,
     pullFromAddressManager: boolean,
     minBalanceEther: number,
+    minGasPriceInGwei: number,
+    maxGasPriceInGwei: number,
+    gasRetryIncrement: number,
     log: Logger,
     fraudSubmissionAddress: string
   ) {
@@ -46,6 +49,9 @@ export class StateBatchSubmitter extends BatchSubmitter {
       finalityConfirmations,
       pullFromAddressManager,
       minBalanceEther,
+      minGasPriceInGwei,
+      maxGasPriceInGwei,
+      gasRetryIncrement,
       log
     )
     this.fraudSubmissionAddress = fraudSubmissionAddress
@@ -140,8 +146,15 @@ export class StateBatchSubmitter extends BatchSubmitter {
 
     const offsetStartsAtIndex = startBlock - BLOCK_OFFSET // TODO: Remove BLOCK_OFFSET by adding a tx to Geth's genesis
     this.log.debug('Submitting batch. Tx:', tx)
+    const contractFunction = async (gasPrice): Promise<TransactionReceipt> => {
+      const contractTx = await this.chainContract.appendStateBatch(batch, offsetStartsAtIndex, {gasPrice})
+      return this.signer.provider.waitForTransaction(
+        contractTx.hash,
+        this.numConfirmations
+      )
+    }
     return this._submitAndLogTx(
-      this.chainContract.appendStateBatch(batch, offsetStartsAtIndex),
+      contractFunction,
       'Submitted state root batch!'
     )
   }

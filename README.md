@@ -4,7 +4,7 @@ Contains an executable batch submitter service which watches L1 and a local L2 n
 `CanonicalTransactionChain` & `StateCommitmentChain` based on its local information.
 
 ## Configuration
-All configuration is done via environment variables.
+All configuration is done via environment variables. See all variables at [.env.example](.env.example); copy into a `.env` file before running.
 
 ## Building & Running
 1. Make sure dependencies are installed just run `yarn` in the base directory
@@ -21,3 +21,7 @@ Before running, set the `DEBUG` environment variable to specify the verbosity le
 Examples:
 * Everything but debug: `export DEBUG=info*,error*,warn*`
 * Most verbose: `export DEBUG=info*,error*,warn*,debug*`
+
+## Testing & linting
+- Run unit tests with `yarn test`
+- See lint errors with `yarn lint`; auto-fix with `yarn lint --fix`

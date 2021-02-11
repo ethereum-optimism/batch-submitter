@@ -24,9 +24,10 @@ export interface AppendSequencerBatchParams {
  */
 export class CanonicalTransactionChainContract extends Contract {
   public async appendSequencerBatch(
-    batch: AppendSequencerBatchParams
+    batch: AppendSequencerBatchParams,
+    options?: any
   ): Promise<TransactionResponse> {
-    return appendSequencerBatch(this, batch)
+    return appendSequencerBatch(this, batch, options)
   }
 }
 
@@ -38,7 +39,8 @@ const APPEND_SEQUENCER_BATCH_METHOD_ID = 'appendSequencerBatch()'
 
 const appendSequencerBatch = async (
   OVM_CanonicalTransactionChain: Contract,
-  batch: AppendSequencerBatchParams
+  batch: AppendSequencerBatchParams,
+  options?: any
 ): Promise<TransactionResponse> => {
   const methodId = keccak256(
     Buffer.from(APPEND_SEQUENCER_BATCH_METHOD_ID)
@@ -47,6 +49,7 @@ const appendSequencerBatch = async (
   return OVM_CanonicalTransactionChain.signer.sendTransaction({
     to: OVM_CanonicalTransactionChain.address,
     data: '0x' + methodId + calldata,
+    ...options
   })
 }
 
