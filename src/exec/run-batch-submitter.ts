@@ -82,7 +82,7 @@ const requiredEnvVars: RequiredEnvVars = {
 const env = process.env
 const FRAUD_SUBMISSION_ADDRESS = env.FRAUD_SUBMISSION_ADDRESS || 'no fraud'
 const DISABLE_QUEUE_BATCH_APPEND = !!env.DISABLE_QUEUE_BATCH_APPEND
-const MIN_GAS_PRICE_IN_GWEI = parseInt(env.MIN_GAS_PRICE_IN_GWEI, 10) || 0
+const MIN_GAS_PRICE_IN_GWEI = parseInt(env.MIN_GAS_PRICE_IN_GWEI, 10) || undefined
 const MAX_GAS_PRICE_IN_GWEI = parseInt(env.MAX_GAS_PRICE_IN_GWEI, 10) || 70
 const GAS_RETRY_INCREMENT = parseInt(env.GAS_RETRY_INCREMENT, 10) || 5
 // The private key that will be used to submit tx and state batches.
