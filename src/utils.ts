@@ -3,7 +3,7 @@ import { BigNumber } from 'ethers'
 
 export const getLen = (pos: { start; end }) => (pos.end - pos.start) * 2
 
-export const gasInGwei = (gasInWei: BigNumber) => 
+export const gasInGwei = (gasInWei: BigNumber) =>
   gasInWei.div(1_000_000_000).toNumber()
 
 export const encodeHex = (val: any, len: number) =>
