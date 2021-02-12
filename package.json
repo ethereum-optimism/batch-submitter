@@ -43,6 +43,7 @@
     "ynatm": "^0.2.1"
   },
   "devDependencies": {
+    "@eth-optimism/dev": "^1.0.0",
     "@eth-optimism/smock": "^0.0.2",
     "@types/chai": "^4.1.7",
     "@types/chai-as-promised": "^7.1.0",
