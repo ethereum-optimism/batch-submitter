@@ -1,10 +1,10 @@
 /* External Imports */
 import chai = require('chai')
-import spies from 'chai-spies'
+import sinonChai from 'sinon-chai'
 import Mocha from 'mocha'
 
 const should = chai.should()
 const expect = chai.expect
-chai.use(spies)
+chai.use(sinonChai)
 
 export { should, expect, chai, Mocha }

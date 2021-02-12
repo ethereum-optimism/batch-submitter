@@ -4,6 +4,7 @@ import { expect, chai } from '../setup'
 import { ethers } from '@nomiclabs/buidler'
 import { Signer, ContractFactory, Contract, BigNumber } from 'ethers'
 import ganache from 'ganache-core'
+import sinon from 'sinon'
 import { Web3Provider, JsonRpcProvider } from '@ethersproject/providers'
 import { getContractInterface } from '@eth-optimism/contracts'
 import { smockit, MockContract } from '@eth-optimism/smock'
@@ -143,6 +144,10 @@ describe('TransactionBatchSubmitter', () => {
       OVM_CanonicalTransactionChain.address,
       '0x' + '00'.repeat(20)
     )
+  })
+
+  afterEach(() => {
+    sinon.restore()
   })
 
   describe('Submit', () => {
@@ -325,13 +330,11 @@ describe('TransactionBatchSubmitter', () => {
 
       const highGasPriceWei = BigNumber.from(200).mul(1_000_000_000)
       
-      chai.spy.on(sequencer, ['getGasPrice'], () => highGasPriceWei)
+      sinon.stub(sequencer, 'getGasPrice').callsFake(async () => highGasPriceWei)
 
       const receipt = await batchSubmitter.submitNextBatch()
-      expect(sequencer.getGasPrice).to.have.been.called();
+      expect(sequencer.getGasPrice).to.have.been.calledOnce;
       expect(receipt).to.be.undefined
-
-      chai.spy.restore(sequencer)
     })
 
     it('should submit if gas price is not over threshold', async () => {
@@ -342,13 +345,11 @@ describe('TransactionBatchSubmitter', () => {
 
       const lowGasPriceWei = BigNumber.from(2).mul(1_000_000_000)
       
-      chai.spy.on(sequencer, ['getGasPrice'], () => lowGasPriceWei)
+      sinon.stub(sequencer, 'getGasPrice').callsFake(async () => lowGasPriceWei)
 
       const receipt = await batchSubmitter.submitNextBatch()
-      expect(sequencer.getGasPrice).to.have.been.called();
+      expect(sequencer.getGasPrice).to.have.been.calledOnce;
       expect(receipt).to.not.be.undefined
-      
-      chai.spy.restore(sequencer)
     })
   })
 })
