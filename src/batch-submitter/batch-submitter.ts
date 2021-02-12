@@ -1,7 +1,6 @@
 /* External Imports */
 import { Contract, Signer, utils } from 'ethers'
 import {
-  TransactionResponse,
   TransactionReceipt,
 } from '@ethersproject/abstract-provider'
 import * as ynatm from '@eth-optimism/ynatm'
@@ -11,7 +10,6 @@ import { getContractFactory } from '@eth-optimism/contracts'
 
 /* Internal Imports */
 import { Address, Bytes32 } from '../coders'
-
 export interface RollupInfo {
   mode: 'sequencer' | 'verifier'
   syncing: boolean
