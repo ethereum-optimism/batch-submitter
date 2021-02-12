@@ -8,6 +8,9 @@ import {
   getContractInterface,
   getContractFactory,
 } from '@eth-optimism/contracts'
+import {
+  getContractInterface as getNewContractInterface,
+} from 'new-contracts'
 import { OptimismProvider } from '@eth-optimism/provider'
 import { Logger } from '@eth-optimism/core-utils'
 
@@ -366,13 +369,13 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
 
       // The latest allowed timestamp/blockNumber is the next queue element!
       let nextQueueIndex = await this.chainContract.getNextQueueIndex()
-      let latestTimestamp
-      let latestBlockNumber
+      let latestTimestamp: number
+      let latestBlockNumber: number
 
       // updateLatestTimestampAndBlockNumber is a helper which updates
       // the latest timestamp and block number based on the pending queue elements.
       const updateLatestTimestampAndBlockNumber = async () => {
-        if (await this.chainContract.getNumPendingQueueElements() === 0) {
+        if (await this.chainContract.getNumPendingQueueElements() !== 0) {
           const [queueEleHash, queueTimestamp, queueBlockNumber] =
             await this.chainContract.getQueueElement(nextQueueIndex)
           latestTimestamp = queueTimestamp
@@ -412,7 +415,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
           continue
         }
         // Fix the element if its timestammp/blockNumber is too large
-        if (ele.timestamp > latestTimestamp || ele.blockNumber < latestBlockNumber) {
+        if (ele.timestamp > latestTimestamp || ele.blockNumber > latestBlockNumber) {
           this.log.warn(
             `Fixing timestamp/blockNumber too large.
              Old ts: ${ele.timestamp} New ts: ${latestTimestamp} Old bn: ${ele.blockNumber} New bn: ${latestBlockNumber}`
@@ -436,7 +439,6 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     if (this.autoFixBatchOptions.fixMonotonicity) {
       batch = await fixMonotonicity(batch)
     }
-    this.log.warn('YOYO DID WE MAKE IT?')
     return batch
   }
 
@@ -444,12 +446,12 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     const addressManagerAddr = (await this._getRollupInfo()).addresses.addressResolver
     const manager = new Contract(
       addressManagerAddr,
-      getContractInterface('Lib_AddressManager'),
+      getNewContractInterface('Lib_AddressManager'),
       this.signer.provider
     )
 
     const addr = await manager.getAddress('OVM_ChainStorageContainer:CTC:batches')
-    const container = new Contract(addr, getContractInterface('OVM_ChainStorageContainer'), this.signer.provider)
+    const container = new Contract(addr, getNewContractInterface('iOVM_ChainStorageContainer'), this.signer.provider)
 
     let meta = await container.getGlobalMetadata()
     // remove 0x
@@ -459,8 +461,8 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
 
     const totalElements = meta.slice(-10)
     const nextQueueIndex = meta.slice(-20, -10)
-    const lastTimestamp = meta.slice(-30, -20)
-    const lastBlockNumber = meta.slice(-40, -30)
+    const lastTimestamp = parseInt(meta.slice(-30, -20), 16)
+    const lastBlockNumber = parseInt(meta.slice(-40, -30), 16)
     this.log.debug(`Got lastTimestamp: ${lastTimestamp} and lastBlockNumber: ${lastBlockNumber}`)
 
     return {lastTimestamp, lastBlockNumber}

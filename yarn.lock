@@ -6093,6 +6093,19 @@ negotiator@0.6.2:
   resolved "https://registry.yarnpkg.com/negotiator/-/negotiator-0.6.2.tgz#feacf7ccf525a77ae9634436a64883ffeca346fb"
   integrity sha512-hZXc7K2e+PgeI1eDBe/10Ard4ekbfrrqG8Ep+8Jmf4JID2bNg7NvCPOZN+kfF574pFQI7mum2AUqDidoKqcTOw==
 
+"new-contracts@npm:@eth-optimism/contracts@0.1.4":
+  version "0.1.4"
+  resolved "https://registry.yarnpkg.com/@eth-optimism/contracts/-/contracts-0.1.4.tgz#a918bffcdfa0ce22c1af3b091a81af732f58a294"
+  integrity sha512-JlbhPkYDgurQwlar1L90XTAG0QK8Sd2WCU8Zaa6BXn+Bg1mVe3g80samE0YaOFNHmSscjtvjXqy3B/d0tzIH7w==
+  dependencies:
+    "@eth-optimism/solc" "^0.6.12-alpha.1"
+    "@ethersproject/abstract-provider" "^5.0.8"
+    "@ethersproject/contracts" "^5.0.5"
+    "@ethersproject/hardware-wallets" "^5.0.8"
+    "@openzeppelin/contracts" "^3.3.0"
+    ethers "5.0.0"
+    ganache-core "^2.12.1"
+
 next-tick@~1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/next-tick/-/next-tick-1.0.0.tgz#ca86d1fe8828169b0120208e3dc8424b9db8342c"
