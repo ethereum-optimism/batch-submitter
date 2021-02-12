@@ -1,5 +1,5 @@
 /* External Imports */
-import { BigNumber, Signer, ethers, Wallet } from 'ethers'
+import { BigNumber, Signer, ethers, Wallet, Contract } from 'ethers'
 import {
   TransactionResponse,
   TransactionReceipt,
@@ -37,7 +37,7 @@ import { RollupInfo, Range, BatchSubmitter, BLOCK_OFFSET } from '.'
 
 export interface AutoFixBatchOptions {
   fixDoublePlayedDeposits: boolean
-  fixDelayedTimestampAndBlockNumberHardcoded: boolean
+  fixMonotonicity: boolean
 }
 
 export class TransactionBatchSubmitter extends BatchSubmitter {
@@ -66,7 +66,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     disableQueueBatchAppend: boolean,
     autoFixBatchOptions: AutoFixBatchOptions = {
       fixDoublePlayedDeposits: false,
-      fixDelayedTimestampAndBlockNumberHardcoded: false
+      fixMonotonicity: false
     }, // TODO: Remove this
   ) {
     super(
@@ -357,14 +357,53 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       return fixedBatch
     }
 
-    const fixDelayedTimestampAndBlockNumberHardcoded = async (b: Batch): Promise<Batch> => {
-      // These just so happen to be a block number & timestamp that we are stuck at & so
-      // to get unstuck use these values.
-      const earliestBlockNumber = 11734130
-      const earliestTimestamp = 1611700743
+    // TODO: Remove this super complex logic and rely on Geth to actually supply correct block data.
+    const fixMonotonicity = async (b: Batch): Promise<Batch> => {
+      // The earliest allowed timestamp/blockNumber is the last timestamp submitted on chain.
+      const { lastTimestamp, lastBlockNumber } = await this._getLastTimestampAndBlockNumber()
+      let earliestTimestamp = lastTimestamp
+      let earliestBlockNumber = lastBlockNumber
+
+      // The latest allowed timestamp/blockNumber is the next queue element!
+      let nextQueueIndex = await this.chainContract.getNextQueueIndex()
+      let latestTimestamp
+      let latestBlockNumber
+
+      // updateLatestTimestampAndBlockNumber is a helper which updates
+      // the latest timestamp and block number based on the pending queue elements.
+      const updateLatestTimestampAndBlockNumber = async () => {
+        if (await this.chainContract.getNumPendingQueueElements() === 0) {
+          const [queueEleHash, queueTimestamp, queueBlockNumber] =
+            await this.chainContract.getQueueElement(nextQueueIndex)
+          latestTimestamp = queueTimestamp
+          latestBlockNumber = queueBlockNumber
+        } else {
+          // If there are no queue elements left then just allow any timestamp/blocknumber
+          latestTimestamp = Number.MAX_SAFE_INTEGER
+          latestBlockNumber = Number.MAX_SAFE_INTEGER
+        }
+      }
+      // Actually update the latest timestamp and block number
+      await updateLatestTimestampAndBlockNumber()
+
+      // Now go through our batch and fix the timestamps and block numbers
+      // to automatically enforce monotonicity.
       const fixedBatch: Batch = []
       for (const ele of b) {
+        if (!ele.isSequencerTx) {
+          // Set the earliest allowed timestamp to the old latest and set the new latest
+          // to the next queue element's timestamp / blockNumber
+          earliestTimestamp = latestTimestamp
+          earliestBlockNumber = latestBlockNumber
+          nextQueueIndex++
+          await updateLatestTimestampAndBlockNumber()
+        }
+        // Fix the element if its timestammp/blockNumber is too small
         if (ele.timestamp < earliestTimestamp || ele.blockNumber < earliestBlockNumber) {
+          this.log.warn(
+            `Fixing timestamp/blockNumber too small.
+             Old ts: ${ele.timestamp} New ts: ${earliestTimestamp} Old bn: ${ele.blockNumber} New bn: ${earliestBlockNumber}`
+          )
           fixedBatch.push({
             ...ele,
             timestamp: earliestTimestamp,
@@ -372,6 +411,20 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
           })
           continue
         }
+        // Fix the element if its timestammp/blockNumber is too large
+        if (ele.timestamp > latestTimestamp || ele.blockNumber < latestBlockNumber) {
+          this.log.warn(
+            `Fixing timestamp/blockNumber too large.
+             Old ts: ${ele.timestamp} New ts: ${latestTimestamp} Old bn: ${ele.blockNumber} New bn: ${latestBlockNumber}`
+          )
+          fixedBatch.push({
+            ...ele,
+            timestamp: latestTimestamp,
+            blockNumber: latestBlockNumber
+          })
+          continue
+        }
+        // No fixes needed!
         fixedBatch.push(ele)
       }
       return fixedBatch
@@ -380,10 +433,37 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     if (this.autoFixBatchOptions.fixDoublePlayedDeposits) {
       batch = await fixDoublePlayedDeposits(batch)
     }
-    if (this.autoFixBatchOptions.fixDelayedTimestampAndBlockNumberHardcoded) {
-      batch = await fixDelayedTimestampAndBlockNumberHardcoded(batch)
+    if (this.autoFixBatchOptions.fixMonotonicity) {
+      batch = await fixMonotonicity(batch)
     }
+    this.log.warn('YOYO DID WE MAKE IT?')
     return batch
+  }
+
+  private async _getLastTimestampAndBlockNumber(): Promise<{ lastTimestamp: number, lastBlockNumber: number}> {
+    const addressManagerAddr = (await this._getRollupInfo()).addresses.addressResolver
+    const manager = new Contract(
+      addressManagerAddr,
+      getContractInterface('Lib_AddressManager'),
+      this.signer.provider
+    )
+
+    const addr = await manager.getAddress('OVM_ChainStorageContainer:CTC:batches')
+    const container = new Contract(addr, getContractInterface('OVM_ChainStorageContainer'), this.signer.provider)
+
+    let meta = await container.getGlobalMetadata()
+    // remove 0x
+    meta = meta.slice(2)
+    // convert to bytes27
+    meta = meta.slice(10)
+
+    const totalElements = meta.slice(-10)
+    const nextQueueIndex = meta.slice(-20, -10)
+    const lastTimestamp = meta.slice(-30, -20)
+    const lastBlockNumber = meta.slice(-40, -30)
+    this.log.debug(`Got lastTimestamp: ${lastTimestamp} and lastBlockNumber: ${lastBlockNumber}`)
+
+    return {lastTimestamp, lastBlockNumber}
   }
 
   private async _fixQueueElement(queueIndex: number, queueElement: BatchElement): Promise<BatchElement> {
