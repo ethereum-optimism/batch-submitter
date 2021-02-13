@@ -13,17 +13,15 @@ import { getContractFactory } from '@eth-optimism/contracts'
 import { Address, Bytes32 } from '../coders'
 
 export interface RollupInfo {
-  signer: Address
   mode: 'sequencer' | 'verifier'
   syncing: boolean
-  l1BlockHash: Bytes32
-  l1BlockHeight: number
-  addresses: {
-    canonicalTransactionChain: Address
-    stateCommitmentChain: Address
-    addressResolver: Address
-    l1ToL2TransactionQueue: Address
-    sequencerDecompression: Address
+  ethContext: {
+    blockNumber: number
+    timestamp: number
+  }
+  rollupContext: {
+    index: number
+    queueIndex: number
   }
 }
 export interface Range {
@@ -54,7 +52,7 @@ export abstract class BatchSubmitter {
     readonly numConfirmations: number,
     readonly resubmissionTimeout: number,
     readonly finalityConfirmations: number,
-    readonly pullFromAddressManager: boolean,
+    readonly addressManagerAddress: string,
     readonly minBalanceEther: number,
     readonly minGasPriceInGwei: number,
     readonly maxGasPriceInGwei: number,
@@ -111,18 +109,10 @@ export abstract class BatchSubmitter {
     return this.l2Provider.send('eth_chainId', [])
   }
 
-  protected async _getChainAddresses(
-    info: RollupInfo
-  ): Promise<{ ctcAddress: string; sccAddress: string }> {
-    if (!this.pullFromAddressManager) {
-      return {
-        ctcAddress: info.addresses.canonicalTransactionChain,
-        sccAddress: info.addresses.stateCommitmentChain,
-      }
-    }
+  protected async _getChainAddresses(): Promise<{ ctcAddress: string; sccAddress: string }> {
     const addressManager = (
       await getContractFactory('Lib_AddressManager', this.signer)
-    ).attach(info.addresses.addressResolver)
+    ).attach(this.addressManagerAddress)
     const sccAddress = await addressManager.getAddress(
       'OVM_StateCommitmentChain'
     )

@@ -29,7 +29,7 @@ export class StateBatchSubmitter extends BatchSubmitter {
     numConfirmations: number,
     resubmissionTimeout: number,
     finalityConfirmations: number,
-    pullFromAddressManager: boolean,
+    addressManagerAddress: string,
     minBalanceEther: number,
     minGasPriceInGwei: number,
     maxGasPriceInGwei: number,
@@ -47,7 +47,7 @@ export class StateBatchSubmitter extends BatchSubmitter {
       numConfirmations,
       resubmissionTimeout,
       finalityConfirmations,
-      pullFromAddressManager,
+      addressManagerAddress,
       minBalanceEther,
       minGasPriceInGwei,
       maxGasPriceInGwei,
@@ -70,7 +70,7 @@ export class StateBatchSubmitter extends BatchSubmitter {
       process.exit(1)
     }
     this.syncing = info.syncing
-    const addrs = await this._getChainAddresses(info)
+    const addrs = await this._getChainAddresses()
     const sccAddress = addrs.sccAddress
     const ctcAddress = addrs.ctcAddress
 
