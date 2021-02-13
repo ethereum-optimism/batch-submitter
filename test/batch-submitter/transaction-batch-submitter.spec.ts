@@ -166,7 +166,7 @@ describe('TransactionBatchSubmitter', () => {
         0,
         1,
         100000,
-        '0x0000000000000000000000000000000000000000',
+        AddressManager.address,
         1,
         MIN_GAS_PRICE_IN_GWEI,
         MAX_GAS_PRICE_IN_GWEI,
@@ -271,7 +271,7 @@ describe('TransactionBatchSubmitter', () => {
         timeout,
         1,
         100000,
-        '0x0000000000000000000000000000000000000000',
+        AddressManager.address,
         1,
         MIN_GAS_PRICE_IN_GWEI,
         MAX_GAS_PRICE_IN_GWEI,
@@ -279,6 +279,7 @@ describe('TransactionBatchSubmitter', () => {
         getLogger(TX_BATCH_SUBMITTER_LOG_TAG),
         false
       )
+
       // Create a batch submitter with a long timeout & make sure it doesn't submit the batches one after another
       const longTimeout = 10_000
       batchSubmitter = createBatchSubmitter(longTimeout)
