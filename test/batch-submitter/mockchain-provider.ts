@@ -65,17 +65,15 @@ export class MockchainProvider extends OptimismProvider {
     }
     if (endpoint === 'rollup_getInfo') {
       const info: RollupInfo = {
-        signer: '0x' + '99'.repeat(20),
         mode: 'sequencer',
         syncing: false,
-        l1BlockHash: '0x' + '99'.repeat(32),
-        l1BlockHeight: 1,
-        addresses: {
-          canonicalTransactionChain: this.ctcAddr,
-          stateCommitmentChain: this.sccAddr,
-          addressResolver: '0x' + '99'.repeat(20),
-          l1ToL2TransactionQueue: '0x' + '99'.repeat(20),
-          sequencerDecompression: '0x' + '99'.repeat(20),
+        ethContext: {
+          timestamp: 0,
+          blockNumber: 0,
+        },
+        rollupContext: {
+          index: 0,
+          queueIndex: 0,
         },
       }
       return info
