@@ -186,17 +186,21 @@ describe('TransactionBatchSubmitter', () => {
       const nextQueueElement = await getQueueElement(
         OVM_CanonicalTransactionChain
       )
-      const data = ctcCoder.createEOATxData.encode({
+      const data = ctcCoder.eip155TxData.encode({
         sig: DUMMY_SIG,
-        messageHash: '66'.repeat(32),
+        gasLimit: 0,
+        gasPrice: 0,
+        nonce: 0,
+        target: '0x0000000000000000000000000000000000000000',
+        data: '0x',
       })
       l2Provider.setL2BlockData(
         {
           data,
           l1BlockNumber: nextQueueElement.blockNumber - 1,
-          txType: TxType.createEOA,
+          txType: TxType.EIP155,
           queueOrigin: QueueOrigin.Sequencer,
-          l1TxOrigin: '0x' + '12'.repeat(20),
+          l1TxOrigin: null,
         } as any,
         nextQueueElement.timestamp - 1
       )
@@ -239,17 +243,21 @@ describe('TransactionBatchSubmitter', () => {
         OVM_CanonicalTransactionChain,
         2
       )
-      const data = ctcCoder.createEOATxData.encode({
+      const data = ctcCoder.ethSignTxData.encode({
         sig: DUMMY_SIG,
-        messageHash: '66'.repeat(32),
+        gasLimit: 0,
+        gasPrice: 0,
+        nonce: 0,
+        target: '0x0000000000000000000000000000000000000000',
+        data: '0x',
       })
       l2Provider.setL2BlockData(
         {
           data,
           l1BlockNumber: nextQueueElement.blockNumber - 1,
-          txType: TxType.createEOA,
+          txType: TxType.EthSign,
           queueOrigin: QueueOrigin.Sequencer,
-          l1TxOrigin: '0x' + '12'.repeat(20),
+          l1TxOrigin: null,
         } as any,
         nextQueueElement.timestamp - 1,
         3,
