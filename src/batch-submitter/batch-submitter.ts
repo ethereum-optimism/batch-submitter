@@ -4,7 +4,7 @@ import {
   TransactionResponse,
   TransactionReceipt,
 } from '@ethersproject/abstract-provider'
-import * as ynatm from 'ynatm'
+import * as ynatm from '@eth-optimism/ynatm'
 import { Logger } from '@eth-optimism/core-utils'
 import { OptimismProvider } from '@eth-optimism/provider'
 import { getContractFactory } from '@eth-optimism/contracts'

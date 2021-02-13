@@ -110,6 +110,13 @@
     semver "^5.5.0"
     tmp "0.0.33"
 
+"@eth-optimism/ynatm@^0.2.2":
+  version "0.2.2"
+  resolved "https://registry.yarnpkg.com/@eth-optimism/ynatm/-/ynatm-0.2.2.tgz#b1f165c3149188f184b66329228746260ae18677"
+  integrity sha512-R/hIAFWEj2sjf3inNEGCffmGofqMFY/7PS/Hh4A/62Kg0wMM8rsyMyW8pXngMnD/EQAjR8WTtKDutq/L5vSMTQ==
+  dependencies:
+    bluebird "^3.7.2"
+
 "@ethereum-waffle/chai@^3.0.0", "@ethereum-waffle/chai@^3.2.1":
   version "3.2.1"
   resolved "https://registry.yarnpkg.com/@ethereum-waffle/chai/-/chai-3.2.1.tgz#5cb542b2a323adf0bc2dda00f48b0eb85944d8ab"
@@ -8858,10 +8865,3 @@ yn@3.1.1:
   version "3.1.1"
   resolved "https://registry.yarnpkg.com/yn/-/yn-3.1.1.tgz#1e87401a09d767c1d5eab26a6e4c185182d2eb50"
   integrity sha512-Ux4ygGWsu2c7isFWe8Yu1YluJmqVhxqK2cLXNQA5AcC3QfbGNpM7fu0Y8b/z16pXLnFxZYvWhd3fhBY9DLmC6Q==
-
-ynatm@^0.2.1:
-  version "0.2.1"
-  resolved "https://registry.yarnpkg.com/ynatm/-/ynatm-0.2.1.tgz#9df16799543e412597920a3675a289a543554e6f"
-  integrity sha512-3VJhTh3wGWDzHe0lVss+3Hgd+wZRNKQsgPd6HOFn8lR/g6xp0C61buvXKaO4bnFhngt6tIZI2qggHlD6duaSMQ==
-  dependencies:
-    bluebird "^3.7.2"
