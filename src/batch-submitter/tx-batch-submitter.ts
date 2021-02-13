@@ -610,8 +610,6 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     if (this._isSequencerTx(block)) {
       if (txType === TxType.EIP155 || txType === TxType.EthSign) {
         return this._getDefaultEcdsaTxBatchElement(block)
-      } else if (txType === TxType.createEOA) {
-        return this._getCreateEoaBatchElement(block)
       } else {
         throw new Error('Unsupported Tx Type!')
       }
