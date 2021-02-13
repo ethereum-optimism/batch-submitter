@@ -6,7 +6,7 @@ import {
 } from '@ethersproject/abstract-provider'
 
 /* Internal Imports */
-import { EIP155TxData, CreateEOATxData, TxType } from './coders'
+import { EIP155TxData, TxType } from './coders'
 
 export enum QueueOrigin {
   Sequencer = 0,
@@ -44,7 +44,7 @@ export interface BatchElement {
   stateRoot: string
   isSequencerTx: boolean
   sequencerTxType: undefined | TxType
-  txData: undefined | EIP155TxData | CreateEOATxData
+  txData: undefined | EIP155TxData
   timestamp: number
   blockNumber: number
 }

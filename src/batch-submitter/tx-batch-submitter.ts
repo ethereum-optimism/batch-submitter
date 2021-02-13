@@ -23,7 +23,6 @@ import {
 } from '../transaciton-chain-contract'
 import {
   EIP155TxData,
-  CreateEOATxData,
   TxType,
   ctcCoder,
   EthSignTxData,
@@ -586,10 +585,8 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
         encoding = ctcCoder.eip155TxData.encode(block.txData as EIP155TxData)
       } else if (block.sequencerTxType === TxType.EthSign) {
         encoding = ctcCoder.ethSignTxData.encode(block.txData as EthSignTxData)
-      } else if (block.sequencerTxType === TxType.createEOA) {
-        encoding = ctcCoder.createEOATxData.encode(
-          block.txData as CreateEOATxData
-        )
+      } else {
+        throw new Error(`Trying to build batch with unknown type ${block.sequencerTxType}`)
       }
       transactions.push(encoding)
     }
@@ -654,20 +651,6 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       target: tx.to ? tx.to : '00'.repeat(20),
       data: tx.data,
     }
-    return {
-      stateRoot: block.stateRoot,
-      isSequencerTx: true,
-      sequencerTxType: block.transactions[0].txType,
-      txData,
-      timestamp: block.timestamp,
-      blockNumber: block.transactions[0].l1BlockNumber,
-    }
-  }
-
-  private _getCreateEoaBatchElement(block: L2Block): BatchElement {
-    const txData: CreateEOATxData = ctcCoder.createEOATxData.decode(
-      block.transactions[0].data
-    )
     return {
       stateRoot: block.stateRoot,
       isSequencerTx: true,
