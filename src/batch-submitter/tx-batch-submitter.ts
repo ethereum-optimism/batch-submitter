@@ -443,9 +443,8 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
   }
 
   private async _getLastTimestampAndBlockNumber(): Promise<{ lastTimestamp: number, lastBlockNumber: number}> {
-    const addressManagerAddr = (await this._getRollupInfo()).addresses.addressResolver
     const manager = new Contract(
-      addressManagerAddr,
+      this.addressManagerAddress,
       getNewContractInterface('Lib_AddressManager'),
       this.signer.provider
     )
