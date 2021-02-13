@@ -89,10 +89,8 @@ export class StateBatchSubmitter extends BatchSubmitter {
       await getContractFactory('OVM_CanonicalTransactionChain', this.signer)
     ).attach(ctcAddress)
 
-    this.log.info(
-      `Initialized new State Commitment Chain with address: ${this.chainContract.address}
-       and new Transaction Chain with address: ${this.ctcContract.address}`
-    )
+    this.log.info(`Using State Commitment Chain: ${this.chainContract.address}`)
+    this.log.info(`Using Canonical Transaction Chain: ${this.ctcContract.address}`)
     return
   }
 
