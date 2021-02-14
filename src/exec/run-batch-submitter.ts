@@ -134,6 +134,7 @@ export const run = async () => {
 
   const address = await sequencerSigner.getAddress()
   log.info(`Using sequencer address: ${address}`)
+  log.info(`Using address manager address: ${requiredEnvVars.ADDRESS_MANAGER_ADDRESS}`)
 
   const txBatchSubmitter = new TransactionBatchSubmitter(
     sequencerSigner,
