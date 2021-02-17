@@ -218,8 +218,8 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       ethers.utils.formatUnits(await this.signer.getGasPrice(), 'gwei'), 10
     )
     if (gasPriceInGwei > this.gasThresholdInGwei) {
-      this.log.info(`Current gas price ${gasPriceInGwei} is higher 
-                      than gas price threshold ${this.gasThresholdInGwei}`)
+      this.log.info(`Current gas price ${gasPriceInGwei} is higher ` +
+                      `than gas price threshold ${this.gasThresholdInGwei}`)
       return
     }
 
