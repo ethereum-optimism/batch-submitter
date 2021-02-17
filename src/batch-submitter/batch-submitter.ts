@@ -10,7 +10,6 @@ import { getContractFactory } from '@eth-optimism/contracts'
 
 /* Internal Imports */
 import { Address, Bytes32 } from '../coders'
-import { gasInGwei } from '../utils'
 export interface RollupInfo {
   mode: 'sequencer' | 'verifier'
   syncing: boolean
@@ -168,7 +167,9 @@ export abstract class BatchSubmitter {
     if (this.minGasPriceInGwei !== 0) {
       return this.minGasPriceInGwei
     }
-    let minGasPriceInGwei = gasInGwei(await this.signer.getGasPrice())
+    let minGasPriceInGwei = parseInt(
+      utils.formatUnits(await this.signer.getGasPrice(), 'gwei'), 10
+    )
     if (minGasPriceInGwei > this.maxGasPriceInGwei) {
       this.log.warn('Minimum gas price is higher than max! Ethereum must be congested...')
       minGasPriceInGwei = this.maxGasPriceInGwei

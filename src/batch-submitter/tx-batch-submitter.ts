@@ -28,7 +28,6 @@ import {
   EthSignTxData,
   txTypePlainText,
 } from '../coders'
-import { gasInGwei } from '../utils'
 import {
   L2Block,
   BatchElement,
@@ -215,8 +214,12 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     endBlock: number
   ): Promise<TransactionReceipt> {
     // Do not submit batch if gas price above threshold
-    const gasPriceInGwei = gasInGwei(await this.signer.getGasPrice())
+    const gasPriceInGwei = parseInt(
+      ethers.utils.formatUnits(await this.signer.getGasPrice(), 'gwei'), 10
+    )
     if (gasPriceInGwei > this.gasThresholdInGwei) {
+      this.log.info(`Current gas price ${gasPriceInGwei} is higher 
+                      than gas price threshold ${this.gasThresholdInGwei}`)
       return
     }
 
