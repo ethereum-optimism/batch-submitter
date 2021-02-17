@@ -1,7 +1,7 @@
 /* External Imports */
 import { TransactionReceipt } from '@ethersproject/abstract-provider'
 import { getContractFactory } from '@eth-optimism/contracts'
-import { Contract, Signer, ethers } from 'ethers'
+import { Contract, Signer } from 'ethers'
 import { Logger } from '@eth-optimism/core-utils'
 import { OptimismProvider } from '@eth-optimism/provider'
 
@@ -34,6 +34,7 @@ export class StateBatchSubmitter extends BatchSubmitter {
     minGasPriceInGwei: number,
     maxGasPriceInGwei: number,
     gasRetryIncrement: number,
+    gasThresholdInGwei: number,
     log: Logger,
     fraudSubmissionAddress: string
   ) {
@@ -52,6 +53,7 @@ export class StateBatchSubmitter extends BatchSubmitter {
       minGasPriceInGwei,
       maxGasPriceInGwei,
       gasRetryIncrement,
+      gasThresholdInGwei,
       log
     )
     this.fraudSubmissionAddress = fraudSubmissionAddress

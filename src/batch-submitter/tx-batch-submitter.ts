@@ -64,6 +64,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     minGasPriceInGwei: number,
     maxGasPriceInGwei: number,
     gasRetryIncrement: number,
+    gasThresholdInGwei: number,
     log: Logger,
     disableQueueBatchAppend: boolean,
     autoFixBatchOptions: AutoFixBatchOptions = {
@@ -86,6 +87,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       minGasPriceInGwei,
       maxGasPriceInGwei,
       gasRetryIncrement,
+      gasThresholdInGwei,
       log
     )
     this.disableQueueBatchAppend = disableQueueBatchAppend
@@ -211,6 +213,16 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     startBlock: number,
     endBlock: number
   ): Promise<TransactionReceipt> {
+    // Do not submit batch if gas price above threshold
+    const gasPriceInGwei = parseInt(
+      ethers.utils.formatUnits(await this.signer.getGasPrice(), 'gwei'), 10
+    )
+    if (gasPriceInGwei > this.gasThresholdInGwei) {
+      this.log.info(`Current gas price ${gasPriceInGwei} is higher ` +
+                      `than gas price threshold ${this.gasThresholdInGwei}`)
+      return
+    }
+
     const [batchParams, wasBatchTruncated] = await this._generateSequencerBatchParams(
       startBlock,
       endBlock

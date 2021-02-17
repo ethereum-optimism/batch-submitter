@@ -1,9 +1,10 @@
-import { expect } from '../setup'
+import { expect, chai } from '../setup'
 
 /* External Imports */
 import { ethers } from '@nomiclabs/buidler'
+import { Signer, ContractFactory, Contract, BigNumber } from 'ethers'
 import ganache from 'ganache-core'
-import { Signer, ContractFactory, Contract } from 'ethers'
+import sinon from 'sinon'
 import { Web3Provider, JsonRpcProvider } from '@ethersproject/providers'
 import { getContractInterface } from '@eth-optimism/contracts'
 import { smockit, MockContract } from '@eth-optimism/smock'
@@ -36,6 +37,7 @@ const MIN_TX_SIZE = 1_000
 const MIN_GAS_PRICE_IN_GWEI = 1
 const MAX_GAS_PRICE_IN_GWEI = 70
 const GAS_RETRY_INCREMENT = 5
+const GAS_THRESHOLD_IN_GWEI = 120
 
 // Helper functions
 interface QueueElement {
@@ -144,6 +146,10 @@ describe('TransactionBatchSubmitter', () => {
     )
   })
 
+  afterEach(() => {
+    sinon.restore()
+  })
+
   describe('Submit', () => {
     const enqueuedElements: Array<{
       blockNumber: number
@@ -176,6 +182,7 @@ describe('TransactionBatchSubmitter', () => {
         MIN_GAS_PRICE_IN_GWEI,
         MAX_GAS_PRICE_IN_GWEI,
         GAS_RETRY_INCREMENT,
+        GAS_THRESHOLD_IN_GWEI,
         getLogger(TX_BATCH_SUBMITTER_LOG_TAG),
         false
       )
@@ -289,6 +296,7 @@ describe('TransactionBatchSubmitter', () => {
         MIN_GAS_PRICE_IN_GWEI,
         MAX_GAS_PRICE_IN_GWEI,
         GAS_RETRY_INCREMENT,
+        GAS_THRESHOLD_IN_GWEI,
         getLogger(TX_BATCH_SUBMITTER_LOG_TAG),
         false
       )
@@ -311,6 +319,36 @@ describe('TransactionBatchSubmitter', () => {
       await new Promise((r) => setTimeout(r, shortTimeout))
       receipt = await batchSubmitter.submitNextBatch()
       // The receipt should NOT be undefined because that means it successfully submitted!
+      expect(receipt).to.not.be.undefined
+    })
+
+    it('should not submit if gas price is over threshold', async () => {
+      l2Provider.setNumBlocksToReturn(2)
+      l2Provider.setL2BlockData({
+        queueOrigin: QueueOrigin.L1ToL2,
+      } as any)
+
+      const highGasPriceWei = BigNumber.from(200).mul(1_000_000_000)
+      
+      sinon.stub(sequencer, 'getGasPrice').callsFake(async () => highGasPriceWei)
+
+      const receipt = await batchSubmitter.submitNextBatch()
+      expect(sequencer.getGasPrice).to.have.been.calledOnce;
+      expect(receipt).to.be.undefined
+    })
+
+    it('should submit if gas price is not over threshold', async () => {
+      l2Provider.setNumBlocksToReturn(2)
+      l2Provider.setL2BlockData({
+        queueOrigin: QueueOrigin.L1ToL2,
+      } as any)
+
+      const lowGasPriceWei = BigNumber.from(2).mul(1_000_000_000)
+      
+      sinon.stub(sequencer, 'getGasPrice').callsFake(async () => lowGasPriceWei)
+
+      const receipt = await batchSubmitter.submitNextBatch()
+      expect(sequencer.getGasPrice).to.have.been.calledOnce;
       expect(receipt).to.not.be.undefined
     })
   })

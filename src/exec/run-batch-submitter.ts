@@ -88,7 +88,7 @@ const DISABLE_QUEUE_BATCH_APPEND = !!env.DISABLE_QUEUE_BATCH_APPEND
 const MIN_GAS_PRICE_IN_GWEI = parseInt(env.MIN_GAS_PRICE_IN_GWEI, 10) || 0
 const MAX_GAS_PRICE_IN_GWEI = parseInt(env.MAX_GAS_PRICE_IN_GWEI, 10) || 70
 const GAS_RETRY_INCREMENT = parseInt(env.GAS_RETRY_INCREMENT, 10) || 5
-
+const GAS_THRESHOLD_IN_GWEI = parseInt(env.GAS_THRESHOLD_IN_GWEI, 10) || 100
 // The private key that will be used to submit tx and state batches.
 const SEQUENCER_PRIVATE_KEY = env.SEQUENCER_PRIVATE_KEY
 const MNEMONIC = env.MNEMONIC
@@ -150,6 +150,7 @@ export const run = async () => {
     MIN_GAS_PRICE_IN_GWEI,
     MAX_GAS_PRICE_IN_GWEI,
     GAS_RETRY_INCREMENT,
+    GAS_THRESHOLD_IN_GWEI,
     getLogger(TX_BATCH_SUBMITTER_LOG_TAG),
     DISABLE_QUEUE_BATCH_APPEND,
     autoFixBatchOptions
@@ -170,6 +171,7 @@ export const run = async () => {
     MIN_GAS_PRICE_IN_GWEI,
     MAX_GAS_PRICE_IN_GWEI,
     GAS_RETRY_INCREMENT,
+    GAS_THRESHOLD_IN_GWEI,
     getLogger(STATE_BATCH_SUBMITTER_LOG_TAG),
     FRAUD_SUBMISSION_ADDRESS
   )
