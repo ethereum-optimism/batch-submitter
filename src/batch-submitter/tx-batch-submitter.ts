@@ -12,15 +12,6 @@ import {
   getContractInterface as getNewContractInterface,
 } from 'new-contracts'
 import { OptimismProvider } from '@eth-optimism/provider'
-
-/* Internal Imports */
-import {
-  CanonicalTransactionChainContract,
-  encodeAppendSequencerBatch,
-  BatchContext,
-  AppendSequencerBatchParams,
-} from '../transaciton-chain-contract'
-
 import {
   Logger,
   EIP155TxData,
@@ -29,6 +20,14 @@ import {
   EthSignTxData,
   txTypePlainText,
 } from '@eth-optimism/core-utils'
+
+/* Internal Imports */
+import {
+  CanonicalTransactionChainContract,
+  encodeAppendSequencerBatch,
+  BatchContext,
+  AppendSequencerBatchParams,
+} from '../transaciton-chain-contract'
 
 import {
   L2Block,
