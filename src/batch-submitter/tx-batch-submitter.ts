@@ -511,7 +511,8 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
         gasPrice,
         nonce,
         target: tx[3],
-        data: tx[5]
+        data: tx[5],
+        type: TxType.EIP155,
       }
       return {
         stateRoot: queueElement.stateRoot,
@@ -663,6 +664,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       nonce: tx.nonce,
       target: tx.to ? tx.to : '00'.repeat(20),
       data: tx.data,
+      type: block.transactions[0].txType,
     }
     return {
       stateRoot: block.stateRoot,
