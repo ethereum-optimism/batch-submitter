@@ -8,7 +8,6 @@ import sinon from 'sinon'
 import { Web3Provider, JsonRpcProvider } from '@ethersproject/providers'
 import { getContractInterface } from '@eth-optimism/contracts'
 import { smockit, MockContract } from '@eth-optimism/smock'
-import { remove0x, getLogger } from '@eth-optimism/core-utils'
 
 /* Internal Imports */
 import { MockchainProvider } from './mockchain-provider'
@@ -21,14 +20,19 @@ import {
 import {
   CanonicalTransactionChainContract,
   QueueOrigin,
-  TxType,
-  ctcCoder,
   TransactionBatchSubmitter as RealTransactionBatchSubmitter,
-  Signature,
   TX_BATCH_SUBMITTER_LOG_TAG,
   Batch,
   BatchSubmitter,
 } from '../../src'
+
+import {
+  Signature,
+  TxType,
+  ctcCoder,
+  remove0x,
+  getLogger,
+} from '@eth-optimism/core-utils'
 
 const DECOMPRESSION_ADDRESS = '0x4200000000000000000000000000000000000008'
 const MAX_GAS_LIMIT = 8_000_000
@@ -58,7 +62,7 @@ const getQueueElement = async (
 const DUMMY_SIG: Signature = {
   r: '11'.repeat(32),
   s: '22'.repeat(32),
-  v: '01',
+  v: 1,
 }
 // A transaction batch submitter which skips the validate batch check
 class TransactionBatchSubmitter extends RealTransactionBatchSubmitter {

@@ -51,7 +51,7 @@
     ethers "5.0.0"
     ganache-core "^2.12.1"
 
-"@eth-optimism/core-utils@0.0.1-alpha.30", "@eth-optimism/core-utils@^0.0.1-alpha.30":
+"@eth-optimism/core-utils@0.0.1-alpha.30":
   version "0.0.1-alpha.30"
   resolved "https://registry.yarnpkg.com/@eth-optimism/core-utils/-/core-utils-0.0.1-alpha.30.tgz#31462596753df182e89cea63e19bf621c07ad898"
   integrity sha512-ir8OevZSRu3U7npO+oY9VXADtXIKGHbw/V9CGPMNgXyuoifnuBLuL0OouL0OUhPRAbPHauYwjJX1xr29nJe1Tw==
@@ -70,6 +70,21 @@
     express "^4.17.1"
     memdown "^4.0.0"
     ts-md5 "^1.2.4"
+    uuid "^3.3.3"
+
+"@eth-optimism/core-utils@^0.1.5":
+  version "0.1.5"
+  resolved "https://registry.yarnpkg.com/@eth-optimism/core-utils/-/core-utils-0.1.5.tgz#90b3f3d14b25abd8a210d78678d36e54f0c841f4"
+  integrity sha512-DLcHKFXcfoVb0yizfHeDGvgfHYb5DRRMnZyXLXIN0HNrAeavQEjgRFLOo/qy+xNjGI99LKSvyJtHP/C9ImJDag==
+  dependencies:
+    "@ethersproject/abstract-provider" "^5.0.9"
+    axios "^0.21.1"
+    body-parser "^1.19.0"
+    debug "^4.1.1"
+    dotenv "^8.2.0"
+    ethereumjs-util "^6.2.0"
+    ethers "^5.0.24"
+    express "^4.17.1"
     uuid "^3.3.3"
 
 "@eth-optimism/dev@^1.0.0":
@@ -225,7 +240,7 @@
     "@ethersproject/transactions" "^5.0.5"
     "@ethersproject/web" "^5.0.6"
 
-"@ethersproject/abstract-provider@^5.0.0", "@ethersproject/abstract-provider@^5.0.4", "@ethersproject/abstract-provider@^5.0.8":
+"@ethersproject/abstract-provider@^5.0.0", "@ethersproject/abstract-provider@^5.0.4", "@ethersproject/abstract-provider@^5.0.8", "@ethersproject/abstract-provider@^5.0.9":
   version "5.0.9"
   resolved "https://registry.yarnpkg.com/@ethersproject/abstract-provider/-/abstract-provider-5.0.9.tgz#a55410b73e3994842884eb82b1f43e3a9f653eea"
   integrity sha512-X9fMkqpeu9ayC3JyBkeeZhn35P4xQkpGX/l+FrxDtEW9tybf/UWXSMi8bGThpPtfJ6q6U2LDetXSpSwK4TfYQQ==
@@ -1612,6 +1627,13 @@ axios@^0.19.0:
   integrity sha512-fjgm5MvRHLhx+osE2xoekY70AhARk3a6hkN+3Io1jc00jtquGvxYlKlsFUhmUET0V5te6CcZI7lcv2Ym61mjHA==
   dependencies:
     follow-redirects "1.5.10"
+
+axios@^0.21.1:
+  version "0.21.1"
+  resolved "https://registry.yarnpkg.com/axios/-/axios-0.21.1.tgz#22563481962f4d6bde9a76d516ef0e5d3c09b2b8"
+  integrity sha512-dKQiRHxGD9PPRIUNIWvZhPTPpl1rf/OxTYKsqKUDjBwYylTvV7SjSHJb9ratfyzM6wCdLCOYLzs73qpg5c4iGA==
+  dependencies:
+    follow-redirects "^1.10.0"
 
 babel-code-frame@^6.26.0:
   version "6.26.0"
@@ -4247,6 +4269,11 @@ follow-redirects@1.5.10:
   integrity sha512-0V5l4Cizzvqt5D44aTXbFZz+FtyXV1vrDN6qrelxtfYQKW0KO0W2T/hkE8xvGa/540LkZlkaUjO4ailYTFtHVQ==
   dependencies:
     debug "=3.1.0"
+
+follow-redirects@^1.10.0:
+  version "1.13.2"
+  resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.13.2.tgz#dd73c8effc12728ba5cf4259d760ea5fb83e3147"
+  integrity sha512-6mPTgLxYm3r6Bkkg0vNM0HTjfGrOEtsfbhagQvbxDEsEkpNhw582upBaoRZylzen6krEmxXJgt9Ju6HiI4O7BA==
 
 follow-redirects@^1.12.1:
   version "1.13.1"
