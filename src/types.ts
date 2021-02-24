@@ -6,7 +6,7 @@ import {
 } from '@ethersproject/abstract-provider'
 
 /* Internal Imports */
-import { EIP155TxData, TxType } from './coders'
+import { EIP155TxData, TxType } from '@eth-optimism/core-utils'
 
 export enum QueueOrigin {
   Sequencer = 0,

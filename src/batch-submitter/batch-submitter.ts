@@ -4,12 +4,10 @@ import {
   TransactionReceipt,
 } from '@ethersproject/abstract-provider'
 import * as ynatm from '@eth-optimism/ynatm'
-import { Logger } from '@eth-optimism/core-utils'
+import { Address, Bytes32, Logger } from '@eth-optimism/core-utils'
 import { OptimismProvider } from '@eth-optimism/provider'
 import { getContractFactory } from '@eth-optimism/contracts'
 
-/* Internal Imports */
-import { Address, Bytes32 } from '../coders'
 export interface RollupInfo {
   mode: 'sequencer' | 'verifier'
   syncing: boolean

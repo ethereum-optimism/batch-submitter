@@ -12,7 +12,6 @@ import {
   getContractInterface as getNewContractInterface,
 } from 'new-contracts'
 import { OptimismProvider } from '@eth-optimism/provider'
-import { Logger } from '@eth-optimism/core-utils'
 
 /* Internal Imports */
 import {
@@ -21,13 +20,16 @@ import {
   BatchContext,
   AppendSequencerBatchParams,
 } from '../transaciton-chain-contract'
+
 import {
+  Logger,
   EIP155TxData,
   TxType,
   ctcCoder,
   EthSignTxData,
   txTypePlainText,
-} from '../coders'
+} from '@eth-optimism/core-utils'
+
 import {
   L2Block,
   BatchElement,
@@ -653,7 +655,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     const tx: TransactionResponse = block.transactions[0]
     const txData: EIP155TxData = {
       sig: {
-        v: '0' + (tx.v - this.l2ChainId * 2 - 8 - 27).toString(),
+        v: tx.v - this.l2ChainId * 2 - 8 - 27,
         r: tx.r,
         s: tx.s,
       },
