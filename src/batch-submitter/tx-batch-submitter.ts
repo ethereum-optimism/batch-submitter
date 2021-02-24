@@ -12,15 +12,6 @@ import {
   getContractInterface as getNewContractInterface,
 } from 'new-contracts'
 import { OptimismProvider } from '@eth-optimism/provider'
-
-/* Internal Imports */
-import {
-  CanonicalTransactionChainContract,
-  encodeAppendSequencerBatch,
-  BatchContext,
-  AppendSequencerBatchParams,
-} from '../transaciton-chain-contract'
-
 import {
   Logger,
   EIP155TxData,
@@ -29,6 +20,14 @@ import {
   EthSignTxData,
   txTypePlainText,
 } from '@eth-optimism/core-utils'
+
+/* Internal Imports */
+import {
+  CanonicalTransactionChainContract,
+  encodeAppendSequencerBatch,
+  BatchContext,
+  AppendSequencerBatchParams,
+} from '../transaciton-chain-contract'
 
 import {
   L2Block,
@@ -512,7 +511,8 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
         gasPrice,
         nonce,
         target: tx[3],
-        data: tx[5]
+        data: tx[5],
+        type: TxType.EIP155,
       }
       return {
         stateRoot: queueElement.stateRoot,
@@ -664,6 +664,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       nonce: tx.nonce,
       target: tx.to ? tx.to : '00'.repeat(20),
       data: tx.data,
+      type: block.transactions[0].txType,
     }
     return {
       stateRoot: block.stateRoot,

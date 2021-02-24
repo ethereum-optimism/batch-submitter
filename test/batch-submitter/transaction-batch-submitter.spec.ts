@@ -204,6 +204,7 @@ describe('TransactionBatchSubmitter', () => {
         nonce: 0,
         target: '0x0000000000000000000000000000000000000000',
         data: '0x',
+        type: TxType.EIP155,
       })
       l2Provider.setL2BlockData(
         {
@@ -261,6 +262,7 @@ describe('TransactionBatchSubmitter', () => {
         nonce: 0,
         target: '0x0000000000000000000000000000000000000000',
         data: '0x',
+        type: TxType.EthSign,
       })
       l2Provider.setL2BlockData(
         {
