@@ -267,7 +267,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     const blockRange = endBlock - startBlock
     let batch: Batch = await bPromise.map([...Array(blockRange).keys()], (i) => {
       this.log.debug('Fetching L2BatchElement', { blockNo: i })
-      return this._getL2BatchElement(i + startBlock)
+      return this._getL2BatchElement(startBlock + i)
     }, {concurrency: 50})
 
     // Fix our batches if we are configured to. TODO: Remove this.
