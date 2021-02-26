@@ -1,7 +1,8 @@
 /* External Imports */
+import { Promise as bPromise } from 'bluebird'
+import { Contract, Signer } from 'ethers'
 import { TransactionReceipt } from '@ethersproject/abstract-provider'
 import { getContractFactory } from '@eth-optimism/contracts'
-import { Contract, Signer } from 'ethers'
 import { Logger, Bytes32 } from '@eth-optimism/core-utils'
 import { OptimismProvider } from '@eth-optimism/provider'
 
