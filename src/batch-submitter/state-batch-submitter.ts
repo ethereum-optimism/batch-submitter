@@ -170,32 +170,34 @@ export class StateBatchSubmitter extends BatchSubmitter {
     startBlock: number,
     endBlock: number
   ): Promise<Bytes32[]> {
-    const blockRange = endBlock - startBlock
-    const batch: Bytes32[] = await bPromise.map([...Array(blockRange).keys()], (i) => {
-      return this.l2Provider.getBlockWithTransactions(startBlock + i) as L2Block
-    }, { concurrency: 50 }).each((block: L2Block) => {
-      console.log(`block: ${block.number}`)
-      if (block.transactions[0].from === this.fraudSubmissionAddress) {
-        this.fraudSubmissionAddress = 'no fraud'
-        return '0xbad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1' 
-      }
-
-      return block.stateRoot
-    })
-
-    // for (let i = startBlock; i < endBlock; i++) {
-    //   const block = (await this.l2Provider.getBlockWithTransactions(
-    //     i
-    //   )) as L2Block
+    // const blockRange = endBlock - startBlock
+    const batch: Bytes32[] = []
+    
+    // await bPromise.map([...Array(blockRange).keys()], (i) => {
+    //   return this.l2Provider.getBlockWithTransactions(startBlock + i) as L2Block
+    // }, { concurrency: 50 }).each((block: L2Block) => {
+    //   console.log(`block: ${block.number}`)
     //   if (block.transactions[0].from === this.fraudSubmissionAddress) {
-    //     batch.push(
-    //       '0xbad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1'
-    //     )
     //     this.fraudSubmissionAddress = 'no fraud'
-    //   } else {
-    //     batch.push(block.stateRoot)
+    //     return '0xbad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1' 
     //   }
-    // }
+
+    //   return block.stateRoot
+    // })
+
+    for (let i = startBlock; i < endBlock; i++) {
+      const block = (await this.l2Provider.getBlockWithTransactions(
+        i
+      )) as L2Block
+      if (block.transactions[0].from === this.fraudSubmissionAddress) {
+        batch.push(
+          '0xbad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1'
+        )
+        this.fraudSubmissionAddress = 'no fraud'
+      } else {
+        batch.push(block.stateRoot)
+      }
+    }
 
     let tx = this.chainContract.interface.encodeFunctionData(
       'appendStateBatch',
