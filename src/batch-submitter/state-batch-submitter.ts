@@ -1,5 +1,4 @@
 /* External Imports */
-import { Promise as bPromise } from 'bluebird'
 import { Contract, Signer } from 'ethers'
 import { TransactionReceipt } from '@ethersproject/abstract-provider'
 import { getContractFactory } from '@eth-optimism/contracts'
@@ -170,20 +169,7 @@ export class StateBatchSubmitter extends BatchSubmitter {
     startBlock: number,
     endBlock: number
   ): Promise<Bytes32[]> {
-    // const blockRange = endBlock - startBlock
     const batch: Bytes32[] = []
-    
-    // await bPromise.map([...Array(blockRange).keys()], (i) => {
-    //   return this.l2Provider.getBlockWithTransactions(startBlock + i) as L2Block
-    // }, { concurrency: 50 }).each((block: L2Block) => {
-    //   console.log(`block: ${block.number}`)
-    //   if (block.transactions[0].from === this.fraudSubmissionAddress) {
-    //     this.fraudSubmissionAddress = 'no fraud'
-    //     return '0xbad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1' 
-    //   }
-
-    //   return block.stateRoot
-    // })
 
     for (let i = startBlock; i < endBlock; i++) {
       const block = (await this.l2Provider.getBlockWithTransactions(
