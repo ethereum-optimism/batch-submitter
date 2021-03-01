@@ -50,6 +50,10 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
   private disableQueueBatchAppend: boolean
   private autoFixBatchOptions: AutoFixBatchOptions
 
+  // HACK
+  private extraBlockOffset: number = 1
+  private numBlocksAdded: number = 0
+
   constructor(
     signer: Signer,
     l2Provider: OptimismProvider,
@@ -186,7 +190,8 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
   public async _getBatchStartAndEnd(): Promise<Range> {
     // TODO: Remove BLOCK_OFFSET by adding a tx to Geth's genesis
     const startBlock =
-      (await this.chainContract.getTotalElements()).toNumber() + BLOCK_OFFSET
+      (await this.chainContract.getTotalElements()).toNumber() + BLOCK_OFFSET - this.extraBlockOffset
+    this.log.debug('EXTRA OFFSET', this.extraBlockOffset)
     const endBlock =
       Math.min(
         startBlock + this.maxBatchSize,
@@ -228,6 +233,9 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
         this.numConfirmations
       )
     }
+    this.extraBlockOffset += this.numBlocksAdded
+    this.numBlocksAdded = 0
+    this.log.info('Extra block offset:', this.extraBlockOffset, 'At height', endBlock)
     return this._submitAndLogTx(
       contractFunction,
       'Submitted batch!'
@@ -342,6 +350,73 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
    * - Double played deposits.
    */
   private async _fixBatch(batch: Batch): Promise<Batch> {
+    const fixSkippedDeposits = async (b: Batch): Promise<Batch> => {
+      this.log.debug('Fixing skipped deposits...')
+
+      // The earliest allowed timestamp/blockNumber is the last timestamp submitted on chain.
+      const { lastTimestamp, lastBlockNumber } = await this._getLastTimestampAndBlockNumber()
+
+      // The latest allowed timestamp/blockNumber is the next queue element!
+      let nextQueueIndex = await this.chainContract.getNextQueueIndex()
+      this.log.debug('Next queue index:', nextQueueIndex)
+      let latestTimestamp: number
+      let latestBlockNumber: number
+
+      // updateLatestTimestampAndBlockNumber is a helper which updates
+      // the latest timestamp and block number based on the pending queue elements.
+      const updateLatestTimestampAndBlockNumber = async () => {
+        if (await this.chainContract.getNumPendingQueueElements() !== 0) {
+          const [queueEleHash, queueTimestamp, queueBlockNumber] =
+            await this.chainContract.getQueueElement(nextQueueIndex)
+          latestTimestamp = queueTimestamp
+          latestBlockNumber = queueBlockNumber
+        } else {
+          // If there are no queue elements left then just allow any timestamp/blocknumber
+          latestTimestamp = Number.MAX_SAFE_INTEGER
+          latestBlockNumber = Number.MAX_SAFE_INTEGER
+        }
+      }
+      // Actually update the latest timestamp and block number
+      await updateLatestTimestampAndBlockNumber()
+
+      // Now go through our batch and insert deposits where they are missing
+      const fixedBatch: Batch = []
+      for (const ele of b) {
+        await updateLatestTimestampAndBlockNumber()
+        this.log.info('The element sequencer block number:', (ele as any).seqBlockNumber)
+        this.log.info('Next queue element:', nextQueueIndex, 'ts:',  latestTimestamp, 'bn:', latestBlockNumber)
+        if (ele.isSequencerTx) {
+          // Insert a deposit if the element if its timestammp/blockNumber is too large
+          while (ele.timestamp > latestTimestamp || ele.blockNumber > latestBlockNumber) {
+            this.log.warn(
+              `FOUND SKIPPED DEPOSIT at index ${nextQueueIndex}!
+               Old ts: ${ele.timestamp} Deposit ts: ${latestTimestamp} Old bn: ${ele.blockNumber} Deposit bn: ${latestBlockNumber}`
+            )
+
+            const queueElement: BatchElement = {
+              stateRoot: '0x1212121212121212121212121212121212121212121212121212121212121212',
+              isSequencerTx: false,
+              sequencerTxType: undefined,
+              txData: undefined,
+              timestamp: latestTimestamp,
+              blockNumber: latestBlockNumber
+            }
+            this.log.warn('Inserting queueElement:', queueElement)
+
+            nextQueueIndex++
+            await updateLatestTimestampAndBlockNumber()
+
+            this.numBlocksAdded += 1
+            fixedBatch.push(queueElement)
+          }
+        } else {
+          nextQueueIndex++
+        }
+        fixedBatch.push(ele)
+      }
+      return fixedBatch
+    }
+
     const fixDoublePlayedDeposits = async (b: Batch): Promise<Batch> => {
       let nextQueueIndex = await this.chainContract.getNextQueueIndex()
       const fixedBatch: Batch = []
@@ -437,6 +512,9 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     }
     if (this.autoFixBatchOptions.fixMonotonicity) {
       batch = await fixMonotonicity(batch)
+    }
+    if (true) {
+      batch = await fixSkippedDeposits(batch)
     }
     return batch
   }
@@ -593,7 +671,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
 
     return {
       // TODO: Remove BLOCK_OFFSET by adding a tx to Geth's genesis
-      shouldStartAtElement: shouldStartAtIndex - BLOCK_OFFSET,
+      shouldStartAtElement: shouldStartAtIndex - BLOCK_OFFSET + this.extraBlockOffset, // HACK: extra block offset adds
       totalElementsToAppend,
       contexts,
       transactions,
@@ -606,7 +684,9 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
 
     if (this._isSequencerTx(block)) {
       if (txType === TxType.EIP155 || txType === TxType.EthSign) {
-        return this._getDefaultEcdsaTxBatchElement(block)
+        const test = this._getDefaultEcdsaTxBatchElement(block) as any
+        test.seqBlockNumber = blockNumber
+        return test
       } else {
         throw new Error('Unsupported Tx Type!')
       }
@@ -618,7 +698,8 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
         txData: undefined,
         timestamp: block.timestamp,
         blockNumber: block.transactions[0].l1BlockNumber,
-      }
+        seqBlockNumber: blockNumber
+      } as any
     }
   }
 
