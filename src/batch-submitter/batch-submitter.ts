@@ -5,9 +5,9 @@ import * as ynatm from '@eth-optimism/ynatm'
 import { Logger } from '@eth-optimism/core-utils'
 import { OptimismProvider } from '@eth-optimism/provider'
 import { getContractFactory } from '@eth-optimism/contracts'
-import { JsonRpcProvider } from '@ethersproject/providers'
+import { JsonRpcProvider, TransactionRequest } from '@ethersproject/providers'
 import { formatEther } from 'ethers/lib/utils'
-import { itxWaitForTx, sendTxWithITX } from '../utils'
+import { itxWaitForTx, sendTxWithITX } from '../itx'
 
 export interface RollupInfo {
   mode: 'sequencer' | 'verifier'
@@ -55,7 +55,7 @@ export abstract class BatchSubmitter {
     readonly maxGasPriceInGwei: number,
     readonly gasRetryIncrement: number,
     readonly gasThresholdInGwei: number,
-    readonly itxProvider: string,
+    readonly itxEnabled: boolean,
     readonly log: Logger
   ) {}
 
@@ -196,31 +196,29 @@ export abstract class BatchSubmitter {
     this.log.debug('Waiting for receipt...')
 
     // Enable ITX by setting a provider. It'll re-use the sequencer key.
-    if (this.itxProvider !== '') {
-      const itx = new JsonRpcProvider(
-        'https://kovan.infura.io/v3/9e9102c2a0c34526accd6c64f5c52cdb'
-      )
-      const signer = this.signer.connect(itx)
-
-      const gas = await itx.estimateGas(
-        await signer.populateTransaction({ to, data })
-      )
+    if (this.itxEnabled) {
+      // Only works if the Infura Provider is enabled for ITX.
+      const itx = this.signer.provider as JsonRpcProvider
+      const gas = await itx.estimateGas({ to, data })
 
       const balance = await itx.send('relay_getBalance', [
-        await signer.getAddress(),
+        await this.signer.getAddress(),
       ])
       this.log.info(`Current ITX balance: ` + formatEther(balance))
 
       const relayTransactionHash = await sendTxWithITX(
-        itx,
-        signer,
+        this.signer,
         to,
         data,
-        gas.toString()
+        gas.toString(),
+        numConfirmations
       )
 
       this.log.info(`ITX relay transaction hash: ${relayTransactionHash}`)
-      return itxWaitForTx(itx, relayTransactionHash)
+      const receipt = itxWaitForTx(itx, relayTransactionHash)
+      this.log.debug('Transaction receipt:', receipt)
+      this.log.info(successMessage)
+      return receipt
     } else {
       // Use the esclator algorithm by Optimism.
       const sendTx = async (gasPrice): Promise<TransactionReceipt> => {

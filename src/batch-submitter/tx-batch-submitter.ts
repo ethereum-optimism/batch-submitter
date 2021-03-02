@@ -65,7 +65,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     maxGasPriceInGwei: number,
     gasRetryIncrement: number,
     gasThresholdInGwei: number,
-    itxProvider: string,
+    itxEnabled: boolean,
     log: Logger,
     disableQueueBatchAppend: boolean,
     autoFixBatchOptions: AutoFixBatchOptions = {
@@ -89,7 +89,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       maxGasPriceInGwei,
       gasRetryIncrement,
       gasThresholdInGwei,
-      itxProvider,
+      itxEnabled,
       log
     )
     this.disableQueueBatchAppend = disableQueueBatchAppend

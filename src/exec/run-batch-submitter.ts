@@ -82,7 +82,7 @@ const requiredEnvVars: RequiredEnvVars = {
  * MNEMONIC
  */
 const env = process.env
-const ITX_PROVIDER = env.INFURA_ITX_ID ? env.INFURA_ITX_ID : ''
+const ITX_ENABLED = env.ITX_ENABLED === 'true' ? true : false
 const FRAUD_SUBMISSION_ADDRESS = env.FRAUD_SUBMISSION_ADDRESS || 'no fraud'
 const DISABLE_QUEUE_BATCH_APPEND = !!env.DISABLE_QUEUE_BATCH_APPEND
 const MIN_GAS_PRICE_IN_GWEI = parseInt(env.MIN_GAS_PRICE_IN_GWEI, 10) || 0
@@ -117,6 +117,7 @@ export const run = async () => {
 
   const clearPendingTxs = requiredEnvVars.CLEAR_PENDING_TXS === 'true'
 
+  // ITX relies on JsonRpcProvider for the .send() method.
   const l1Provider: Provider = new JsonRpcProvider(
     requiredEnvVars.L1_NODE_WEB3_URL
   )
@@ -154,7 +155,7 @@ export const run = async () => {
     MAX_GAS_PRICE_IN_GWEI,
     GAS_RETRY_INCREMENT,
     GAS_THRESHOLD_IN_GWEI,
-    ITX_PROVIDER,
+    ITX_ENABLED,
     getLogger(TX_BATCH_SUBMITTER_LOG_TAG),
     DISABLE_QUEUE_BATCH_APPEND,
     autoFixBatchOptions
@@ -176,7 +177,7 @@ export const run = async () => {
     MAX_GAS_PRICE_IN_GWEI,
     GAS_RETRY_INCREMENT,
     GAS_THRESHOLD_IN_GWEI,
-    ITX_PROVIDER,
+    ITX_ENABLED,
     getLogger(STATE_BATCH_SUBMITTER_LOG_TAG),
     FRAUD_SUBMISSION_ADDRESS
   )
