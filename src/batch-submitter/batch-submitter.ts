@@ -210,12 +210,15 @@ export abstract class BatchSubmitter {
         this.signer,
         to,
         data,
-        gas.toString(),
-        numConfirmations
+        gas.toString()
       )
 
       this.log.info(`ITX relay transaction hash: ${relayTransactionHash}`)
-      const receipt = itxWaitForTx(itx, relayTransactionHash)
+      const receipt = await itxWaitForTx(
+        itx,
+        relayTransactionHash,
+        this.numConfirmations
+      )
       this.log.debug('Transaction receipt:', receipt)
       this.log.info(successMessage)
       return receipt

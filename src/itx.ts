@@ -14,7 +14,6 @@ export async function sendTxWithITX(
   to: string,
   data: string,
   gas: string,
-  numConfirmations: number,
   iteration = 0
 ): Promise<string> {
   try {
@@ -49,7 +48,7 @@ export async function sendTxWithITX(
     await wait(2000)
 
     // Let's try to send it again.
-    return sendTxWithITX(signer, to, data, gas, numConfirmations, iteration + 1)
+    return sendTxWithITX(signer, to, data, gas, iteration + 1)
   }
 }
 export async function itxWaitForTx(
