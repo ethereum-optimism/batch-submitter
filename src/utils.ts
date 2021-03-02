@@ -1,34 +1,34 @@
 /* External Imports */
-import { JsonRpcProvider, TransactionReceipt } from "@ethersproject/providers";
-import { BigNumber, Signer, Wallet } from "ethers";
-import { arrayify, defaultAbiCoder, keccak256 } from "ethers/lib/utils";
+import { JsonRpcProvider, TransactionReceipt } from '@ethersproject/providers'
+import { BigNumber, Signer, Wallet } from 'ethers'
+import { arrayify, defaultAbiCoder, keccak256 } from 'ethers/lib/utils'
 
-const RETRY_LIMIT = 3;
+const RETRY_LIMIT = 3
 
-export const getLen = (pos: { start; end }) => (pos.end - pos.start) * 2;
+export const getLen = (pos: { start; end }) => (pos.end - pos.start) * 2
 
 export const encodeHex = (val: any, len: number) =>
-  remove0x(BigNumber.from(val).toHexString()).padStart(len, "0");
+  remove0x(BigNumber.from(val).toHexString()).padStart(len, '0')
 
 export const toVerifiedBytes = (val: string, len: number) => {
-  val = remove0x(val);
+  val = remove0x(val)
   if (val.length !== len) {
-    throw new Error("Invalid length!");
+    throw new Error('Invalid length!')
   }
-  return val;
-};
+  return val
+}
 
 export const remove0x = (str: string): string => {
-  if (str.startsWith("0x")) {
-    return str.slice(2);
+  if (str.startsWith('0x')) {
+    return str.slice(2)
   } else {
-    return str;
+    return str
   }
-};
+}
 
 const wait = (milliseconds) => {
-  return new Promise((resolve) => setTimeout(resolve, milliseconds));
-};
+  return new Promise((resolve) => setTimeout(resolve, milliseconds))
+}
 
 export async function sendTxWithITX(
   itx: JsonRpcProvider,
@@ -40,69 +40,69 @@ export async function sendTxWithITX(
 ): Promise<string> {
   try {
     const tx = {
-      to: to,
-      data: data,
-      gas: BigNumber.from(gas).add(50000).toString(), // A little extra gas since we fetched it using estimateGas
-    };
+      to,
+      data,
+      gas: BigNumber.from(gas)
+        .add(50000)
+        .toString(), // A little extra gas since we fetched it using estimateGas
+    }
 
     const relayTransactionHashToSign = keccak256(
       defaultAbiCoder.encode(
-        ["address", "bytes", "uint", "uint"],
+        ['address', 'bytes', 'uint', 'uint'],
         [tx.to, tx.data, tx.gas, (await itx.getNetwork()).chainId]
       )
-    );
+    )
     const signature = await signer.signMessage(
       arrayify(relayTransactionHashToSign)
-    );
+    )
 
-    return await itx.send("relay_sendTransaction", [tx, signature]);
+    return await itx.send('relay_sendTransaction', [tx, signature])
   } catch (e) {
     // Take into account JSON RPC errors that may arise (e.g. rate limiting)
 
     if (iteration === RETRY_LIMIT) {
-      throw e;
+      throw e
     }
-    await wait(2000);
+    await wait(2000)
 
     // Let's try to send it again.
-    return await sendTxWithITX(itx, signer, to, data, gas, iteration + 1);
+    return sendTxWithITX(itx, signer, to, data, gas, iteration + 1)
   }
 }
 export async function itxWaitForTx(
   itx: JsonRpcProvider,
   relayTransactionHash: string
 ): Promise<TransactionReceipt> {
-  let iteration = 0;
+  let iteration = 0
 
   while (true) {
     try {
       // fetch the latest ethereum transaction hashes
-      const statusResponse = await itx.send("relay_getTransactionStatus", [
+      const statusResponse = await itx.send('relay_getTransactionStatus', [
         relayTransactionHash,
-      ]);
+      ])
 
       // check each of these hashes to see if their receipt exists and
       // has confirmations
-      for (let i = 0; i < statusResponse.length; i++) {
-        const hashes = statusResponse[i];
-        const receipt = await itx.getTransactionReceipt(hashes["ethTxHash"]);
+      for (const response of statusResponse.length) {
+        const hashes = response
+        const receipt = await itx.getTransactionReceipt(hashes['ethTxHash'])
 
         if (receipt && receipt.confirmations && receipt.confirmations > 1) {
           // The transaction is now on chain!
-          this.log.info(
-            `Ethereum transaction hash: ${receipt.transactionHash}`
-          );
-          return;
+          this.log.info(`Ethereum transaction hash: ${receipt.transactionHash}`)
+          return
         }
       }
-      await wait(3000);
+      await wait(3000)
     } catch (e) {
       // Take into account JSON RPC errors that may arise (e.g. rate limiting)
       if (iteration === RETRY_LIMIT) {
-        throw e;
+        throw e
       }
-      iteration = iteration + 1;
-      await wait(5000);
+      iteration = iteration + 1
+      await wait(5000)
     }
   }
 }

@@ -1,24 +1,24 @@
 /* External Imports */
-import { Contract, BigNumber } from "ethers";
+import { Contract, BigNumber } from 'ethers'
 import {
   TransactionResponse,
   TransactionRequest,
-} from "@ethersproject/abstract-provider";
-import { keccak256 } from "ethers/lib/utils";
-import { remove0x, encodeHex } from "./utils";
+} from '@ethersproject/abstract-provider'
+import { keccak256 } from 'ethers/lib/utils'
+import { remove0x, encodeHex } from './utils'
 
 export interface BatchContext {
-  numSequencedTransactions: number;
-  numSubsequentQueueTransactions: number;
-  timestamp: number;
-  blockNumber: number;
+  numSequencedTransactions: number
+  numSubsequentQueueTransactions: number
+  timestamp: number
+  blockNumber: number
 }
 
 export interface AppendSequencerBatchParams {
-  shouldStartAtElement: number; // 5 bytes -- starts at batch
-  totalElementsToAppend: number; // 3 bytes -- total_elements_to_append
-  contexts: BatchContext[]; // total_elements[fixed_size[]]
-  transactions: string[]; // total_size_bytes[],total_size_bytes[]
+  shouldStartAtElement: number // 5 bytes -- starts at batch
+  totalElementsToAppend: number // 3 bytes -- total_elements_to_append
+  contexts: BatchContext[] // total_elements[fixed_size[]]
+  transactions: string[] // total_size_bytes[],total_size_bytes[]
 }
 
 /*
@@ -30,7 +30,7 @@ export class CanonicalTransactionChainContract extends Contract {
     batch: AppendSequencerBatchParams,
     options?: TransactionRequest
   ): Promise<TransactionResponse> {
-    return appendSequencerBatch(this, batch, options);
+    return appendSequencerBatch(this, batch, options)
   }
 }
 
@@ -38,16 +38,16 @@ export class CanonicalTransactionChainContract extends Contract {
  * Internal Functions *
  *********************/
 
-const APPEND_SEQUENCER_BATCH_METHOD_ID = "appendSequencerBatch()";
+const APPEND_SEQUENCER_BATCH_METHOD_ID = 'appendSequencerBatch()'
 
 export async function getAppendSequencerBatch(
   batch: AppendSequencerBatchParams
 ) {
   const methodId = keccak256(
     Buffer.from(APPEND_SEQUENCER_BATCH_METHOD_ID)
-  ).slice(2, 10);
-  const calldata = encodeAppendSequencerBatch(batch);
-  return "0x" + methodId + calldata;
+  ).slice(2, 10)
+  const calldata = encodeAppendSequencerBatch(batch)
+  return '0x' + methodId + calldata
 }
 const appendSequencerBatch = async (
   OVM_CanonicalTransactionChain: Contract,
@@ -58,36 +58,36 @@ const appendSequencerBatch = async (
     to: OVM_CanonicalTransactionChain.address,
     data: await getAppendSequencerBatch(batch),
     ...options,
-  });
-};
+  })
+}
 
 export const encodeAppendSequencerBatch = (
   b: AppendSequencerBatchParams
 ): string => {
-  const encodedShouldStartAtElement = encodeHex(b.shouldStartAtElement, 10);
-  const encodedTotalElementsToAppend = encodeHex(b.totalElementsToAppend, 6);
+  const encodedShouldStartAtElement = encodeHex(b.shouldStartAtElement, 10)
+  const encodedTotalElementsToAppend = encodeHex(b.totalElementsToAppend, 6)
 
-  const encodedContextsHeader = encodeHex(b.contexts.length, 6);
+  const encodedContextsHeader = encodeHex(b.contexts.length, 6)
   const encodedContexts =
     encodedContextsHeader +
-    b.contexts.reduce((acc, cur) => acc + encodeBatchContext(cur), "");
+    b.contexts.reduce((acc, cur) => acc + encodeBatchContext(cur), '')
 
   const encodedTransactionData = b.transactions.reduce((acc, cur) => {
     if (cur.length % 2 !== 0) {
-      throw new Error("Unexpected uneven hex string value!");
+      throw new Error('Unexpected uneven hex string value!')
     }
     const encodedTxDataHeader = remove0x(
       BigNumber.from(remove0x(cur).length / 2).toHexString()
-    ).padStart(6, "0");
-    return acc + encodedTxDataHeader + remove0x(cur);
-  }, "");
+    ).padStart(6, '0')
+    return acc + encodedTxDataHeader + remove0x(cur)
+  }, '')
   return (
     encodedShouldStartAtElement +
     encodedTotalElementsToAppend +
     encodedContexts +
     encodedTransactionData
-  );
-};
+  )
+}
 
 const encodeBatchContext = (context: BatchContext): string => {
   return (
@@ -95,5 +95,5 @@ const encodeBatchContext = (context: BatchContext): string => {
     encodeHex(context.numSubsequentQueueTransactions, 6) +
     encodeHex(context.timestamp, 10) +
     encodeHex(context.blockNumber, 10)
-  );
-};
+  )
+}
