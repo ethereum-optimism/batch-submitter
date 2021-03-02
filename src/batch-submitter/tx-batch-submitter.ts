@@ -27,7 +27,7 @@ import {
   encodeAppendSequencerBatch,
   BatchContext,
   AppendSequencerBatchParams,
-} from '../transaciton-chain-contract'
+} from '../transaction-chain-contract'
 
 import {
   L2Block,
