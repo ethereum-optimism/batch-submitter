@@ -8,9 +8,7 @@ import {
   getContractInterface,
   getContractFactory,
 } from '@eth-optimism/contracts'
-import {
-  getContractInterface as getNewContractInterface,
-} from 'new-contracts'
+import { getContractInterface as getNewContractInterface } from 'new-contracts'
 import { OptimismProvider } from '@eth-optimism/provider'
 import {
   Logger,
@@ -27,7 +25,8 @@ import {
   encodeAppendSequencerBatch,
   BatchContext,
   AppendSequencerBatchParams,
-} from '../transaciton-chain-contract'
+  getAppendSequencerBatch,
+} from '../transaction-chain-contract'
 
 import {
   L2Block,
@@ -66,12 +65,13 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     maxGasPriceInGwei: number,
     gasRetryIncrement: number,
     gasThresholdInGwei: number,
+    itxEnabled: boolean,
     log: Logger,
     disableQueueBatchAppend: boolean,
     autoFixBatchOptions: AutoFixBatchOptions = {
       fixDoublePlayedDeposits: false,
-      fixMonotonicity: false
-    }, // TODO: Remove this
+      fixMonotonicity: false,
+    } // TODO: Remove this
   ) {
     super(
       signer,
@@ -82,13 +82,14 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       maxBatchSubmissionTime,
       numConfirmations,
       resubmissionTimeout,
-      0,  // Supply dummy value because it is not used.
+      0, // Supply dummy value because it is not used.
       addressManagerAddress,
       minBalanceEther,
       minGasPriceInGwei,
       maxGasPriceInGwei,
       gasRetryIncrement,
       gasThresholdInGwei,
+      itxEnabled,
       log
     )
     this.disableQueueBatchAppend = disableQueueBatchAppend
@@ -142,17 +143,12 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       )
 
       if (!this.disableQueueBatchAppend) {
-        const contractFunction = async (gasPrice): Promise<TransactionReceipt> => {
-          const tx = await this.chainContract.appendQueueBatch(99999999, {gasPrice})
-          return this.signer.provider.waitForTransaction(
-            tx.hash,
-            this.numConfirmations
-          )
-        }
-
         // Empty the queue with a huge `appendQueueBatch(..)` call
         return this._submitAndLogTx(
-          contractFunction,
+          this.chainContract.address,
+          this.chainContract.interface.encodeFunctionData('appendQueueBatch', [
+            99999999,
+          ]),
           'Cleared queue!'
         )
       }
@@ -216,18 +212,21 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
   ): Promise<TransactionReceipt> {
     // Do not submit batch if gas price above threshold
     const gasPriceInGwei = parseInt(
-      ethers.utils.formatUnits(await this.signer.getGasPrice(), 'gwei'), 10
+      ethers.utils.formatUnits(await this.signer.getGasPrice(), 'gwei'),
+      10
     )
     if (gasPriceInGwei > this.gasThresholdInGwei) {
-      this.log.info(`Current gas price ${gasPriceInGwei} is higher ` +
-                      `than gas price threshold ${this.gasThresholdInGwei}`)
+      this.log.info(
+        `Current gas price ${gasPriceInGwei} is higher ` +
+          `than gas price threshold ${this.gasThresholdInGwei}`
+      )
       return
     }
 
-    const [batchParams, wasBatchTruncated] = await this._generateSequencerBatchParams(
-      startBlock,
-      endBlock
-    )
+    const [
+      batchParams,
+      wasBatchTruncated,
+    ] = await this._generateSequencerBatchParams(startBlock, endBlock)
     const batchSizeInBytes = encodeAppendSequencerBatch(batchParams).length * 2
     if (!wasBatchTruncated && !this._shouldSubmitBatch(batchSizeInBytes)) {
       return
@@ -235,14 +234,19 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     this.log.debug('Submitting batch. Tx calldata:', batchParams)
 
     const contractFunction = async (gasPrice): Promise<TransactionReceipt> => {
-      const tx = await this.chainContract.appendSequencerBatch(batchParams, {gasPrice})
+      const tx = await this.chainContract.appendSequencerBatch(batchParams, {
+        gasPrice,
+      })
       return this.signer.provider.waitForTransaction(
         tx.hash,
         this.numConfirmations
       )
     }
+
+    const data = await getAppendSequencerBatch(batchParams)
     return this._submitAndLogTx(
-      contractFunction,
+      this.chainContract.address,
+      data,
       'Submitted batch!'
     )
   }
@@ -300,7 +304,9 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     for (const ele of batch) {
       this.log.debug('Verifying batch element:', ele)
       if (!ele.isSequencerTx) {
-        this.log.debug(`Checking queue equality against L1 queue index: ${nextQueueIndex}`)
+        this.log.debug(
+          `Checking queue equality against L1 queue index: ${nextQueueIndex}`
+        )
         if (!(await this._doesQueueElementMatchL1(nextQueueIndex, ele))) {
           return false
         }
@@ -326,13 +332,28 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     return true
   }
 
-  private async _doesQueueElementMatchL1(queueIndex: number, queueElement: BatchElement): Promise<boolean> {
+  private async _doesQueueElementMatchL1(
+    queueIndex: number,
+    queueElement: BatchElement
+  ): Promise<boolean> {
     const logEqualityError = (name, index, expected, got) => {
-      this.log.error(name, 'mismatch | Index:', index, '| Expected:', expected, '| Received:', got)
+      this.log.error(
+        name,
+        'mismatch | Index:',
+        index,
+        '| Expected:',
+        expected,
+        '| Received:',
+        got
+      )
     }
 
     let isEqual = true
-    const [queueEleHash, timestamp, blockNumber] = await this.chainContract.getQueueElement(queueIndex)
+    const [
+      queueEleHash,
+      timestamp,
+      blockNumber,
+    ] = await this.chainContract.getQueueElement(queueIndex)
 
     // TODO: Verify queue element hash equality. The queue element hash can be computed with:
     // keccak256( abi.encode( msg.sender, _target, _gasLimit, _data))
@@ -340,11 +361,21 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     // Check timestamp & blockNumber equality
     if (timestamp !== queueElement.timestamp) {
       isEqual = false
-      logEqualityError('Timestamp', queueIndex, timestamp, queueElement.timestamp)
+      logEqualityError(
+        'Timestamp',
+        queueIndex,
+        timestamp,
+        queueElement.timestamp
+      )
     }
     if (blockNumber !== queueElement.blockNumber) {
       isEqual = false
-      logEqualityError('Block Number', queueIndex, blockNumber, queueElement.blockNumber)
+      logEqualityError(
+        'Block Number',
+        queueIndex,
+        blockNumber,
+        queueElement.blockNumber
+      )
     }
     return isEqual
   }
@@ -361,7 +392,10 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       for (const ele of b) {
         if (!ele.isSequencerTx) {
           if (!(await this._doesQueueElementMatchL1(nextQueueIndex, ele))) {
-            this.log.warn('Fixing double played queue element. Index:', nextQueueIndex)
+            this.log.warn(
+              'Fixing double played queue element. Index:',
+              nextQueueIndex
+            )
             fixedBatch.push(await this._fixQueueElement(nextQueueIndex, ele))
             continue
           }
@@ -375,7 +409,10 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     // TODO: Remove this super complex logic and rely on Geth to actually supply correct block data.
     const fixMonotonicity = async (b: Batch): Promise<Batch> => {
       // The earliest allowed timestamp/blockNumber is the last timestamp submitted on chain.
-      const { lastTimestamp, lastBlockNumber } = await this._getLastTimestampAndBlockNumber()
+      const {
+        lastTimestamp,
+        lastBlockNumber,
+      } = await this._getLastTimestampAndBlockNumber()
       let earliestTimestamp = lastTimestamp
       let earliestBlockNumber = lastBlockNumber
 
@@ -387,9 +424,12 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       // updateLatestTimestampAndBlockNumber is a helper which updates
       // the latest timestamp and block number based on the pending queue elements.
       const updateLatestTimestampAndBlockNumber = async () => {
-        if (await this.chainContract.getNumPendingQueueElements() !== 0) {
-          const [queueEleHash, queueTimestamp, queueBlockNumber] =
-            await this.chainContract.getQueueElement(nextQueueIndex)
+        if ((await this.chainContract.getNumPendingQueueElements()) !== 0) {
+          const [
+            queueEleHash,
+            queueTimestamp,
+            queueBlockNumber,
+          ] = await this.chainContract.getQueueElement(nextQueueIndex)
           latestTimestamp = queueTimestamp
           latestBlockNumber = queueBlockNumber
         } else {
@@ -414,7 +454,10 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
           await updateLatestTimestampAndBlockNumber()
         }
         // Fix the element if its timestammp/blockNumber is too small
-        if (ele.timestamp < earliestTimestamp || ele.blockNumber < earliestBlockNumber) {
+        if (
+          ele.timestamp < earliestTimestamp ||
+          ele.blockNumber < earliestBlockNumber
+        ) {
           this.log.warn(
             `Fixing timestamp/blockNumber too small.
              Old ts: ${ele.timestamp} New ts: ${earliestTimestamp} Old bn: ${ele.blockNumber} New bn: ${earliestBlockNumber}`
@@ -422,12 +465,15 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
           fixedBatch.push({
             ...ele,
             timestamp: earliestTimestamp,
-            blockNumber: earliestBlockNumber
+            blockNumber: earliestBlockNumber,
           })
           continue
         }
         // Fix the element if its timestammp/blockNumber is too large
-        if (ele.timestamp > latestTimestamp || ele.blockNumber > latestBlockNumber) {
+        if (
+          ele.timestamp > latestTimestamp ||
+          ele.blockNumber > latestBlockNumber
+        ) {
           this.log.warn(
             `Fixing timestamp/blockNumber too large.
              Old ts: ${ele.timestamp} New ts: ${latestTimestamp} Old bn: ${ele.blockNumber} New bn: ${latestBlockNumber}`
@@ -435,7 +481,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
           fixedBatch.push({
             ...ele,
             timestamp: latestTimestamp,
-            blockNumber: latestBlockNumber
+            blockNumber: latestBlockNumber,
           })
           continue
         }
@@ -454,15 +500,24 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     return batch
   }
 
-  private async _getLastTimestampAndBlockNumber(): Promise<{ lastTimestamp: number, lastBlockNumber: number}> {
+  private async _getLastTimestampAndBlockNumber(): Promise<{
+    lastTimestamp: number
+    lastBlockNumber: number
+  }> {
     const manager = new Contract(
       this.addressManagerAddress,
       getNewContractInterface('Lib_AddressManager'),
       this.signer.provider
     )
 
-    const addr = await manager.getAddress('OVM_ChainStorageContainer:CTC:batches')
-    const container = new Contract(addr, getNewContractInterface('iOVM_ChainStorageContainer'), this.signer.provider)
+    const addr = await manager.getAddress(
+      'OVM_ChainStorageContainer:CTC:batches'
+    )
+    const container = new Contract(
+      addr,
+      getNewContractInterface('iOVM_ChainStorageContainer'),
+      this.signer.provider
+    )
 
     let meta = await container.getGlobalMetadata()
     // remove 0x
@@ -474,16 +529,30 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     const nextQueueIndex = meta.slice(-20, -10)
     const lastTimestamp = parseInt(meta.slice(-30, -20), 16)
     const lastBlockNumber = parseInt(meta.slice(-40, -30), 16)
-    this.log.debug(`Got lastTimestamp: ${lastTimestamp} and lastBlockNumber: ${lastBlockNumber}`)
+    this.log.debug(
+      `Got lastTimestamp: ${lastTimestamp} and lastBlockNumber: ${lastBlockNumber}`
+    )
 
-    return {lastTimestamp, lastBlockNumber}
+    return { lastTimestamp, lastBlockNumber }
   }
 
-  private async _fixQueueElement(queueIndex: number, queueElement: BatchElement): Promise<BatchElement> {
-    const [queueEleHash, timestamp, blockNumber] = await this.chainContract.getQueueElement(queueIndex)
+  private async _fixQueueElement(
+    queueIndex: number,
+    queueElement: BatchElement
+  ): Promise<BatchElement> {
+    const [
+      queueEleHash,
+      timestamp,
+      blockNumber,
+    ] = await this.chainContract.getQueueElement(queueIndex)
 
-    if (timestamp > queueElement.timestamp && blockNumber > queueElement.blockNumber) {
-      this.log.warn('Double deposit detected!!! Fixing by skipping the deposit & replacing with a dummy tx.')
+    if (
+      timestamp > queueElement.timestamp &&
+      blockNumber > queueElement.blockNumber
+    ) {
+      this.log.warn(
+        'Double deposit detected!!! Fixing by skipping the deposit & replacing with a dummy tx.'
+      )
       // This implies that we've double played a deposit.
       // We can correct this by instead submitting a dummy sequencer tx
       const wallet = Wallet.createRandom()
@@ -497,7 +566,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
         chainId,
         nonce,
         to: '0x1111111111111111111111111111111111111111',
-        data: '0x1234'
+        data: '0x1234',
       })
       // tx: [0nonce, 1gasprice, 2startgas, 3to, 4value, 5data, 6v, 7r, 8s]
       const tx = ethers.utils.RLP.decode(rawTx)
@@ -523,7 +592,10 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
         blockNumber: queueElement.blockNumber,
       }
     }
-    if (timestamp < queueElement.timestamp && blockNumber < queueElement.blockNumber) {
+    if (
+      timestamp < queueElement.timestamp &&
+      blockNumber < queueElement.blockNumber
+    ) {
       this.log.error('A deposit seems to have been skipped!')
       throw new Error('Skipped deposit?!')
     }
@@ -600,7 +672,9 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       } else if (block.sequencerTxType === TxType.EthSign) {
         encoding = ctcCoder.ethSignTxData.encode(block.txData as EthSignTxData)
       } else {
-        throw new Error(`Trying to build batch with unknown type ${block.sequencerTxType}`)
+        throw new Error(
+          `Trying to build batch with unknown type ${block.sequencerTxType}`
+        )
       }
       transactions.push(encoding)
     }

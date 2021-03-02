@@ -1,6 +1,9 @@
 /* External Imports */
 import { Contract, BigNumber } from 'ethers'
-import { TransactionResponse, TransactionRequest } from '@ethersproject/abstract-provider'
+import {
+  TransactionResponse,
+  TransactionRequest,
+} from '@ethersproject/abstract-provider'
 import { keccak256 } from 'ethers/lib/utils'
 import { remove0x, encodeHex } from './utils'
 
@@ -37,19 +40,24 @@ export class CanonicalTransactionChainContract extends Contract {
 
 const APPEND_SEQUENCER_BATCH_METHOD_ID = 'appendSequencerBatch()'
 
+export async function getAppendSequencerBatch(
+  batch: AppendSequencerBatchParams
+) {
+  const methodId = keccak256(
+    Buffer.from(APPEND_SEQUENCER_BATCH_METHOD_ID)
+  ).slice(2, 10)
+  const calldata = encodeAppendSequencerBatch(batch)
+  return '0x' + methodId + calldata
+}
 const appendSequencerBatch = async (
   OVM_CanonicalTransactionChain: Contract,
   batch: AppendSequencerBatchParams,
   options?: TransactionRequest
 ): Promise<TransactionResponse> => {
-  const methodId = keccak256(
-    Buffer.from(APPEND_SEQUENCER_BATCH_METHOD_ID)
-  ).slice(2, 10)
-  const calldata = encodeAppendSequencerBatch(batch)
   return OVM_CanonicalTransactionChain.signer.sendTransaction({
     to: OVM_CanonicalTransactionChain.address,
-    data: '0x' + methodId + calldata,
-    ...options
+    data: await getAppendSequencerBatch(batch),
+    ...options,
   })
 }
 

@@ -15,7 +15,6 @@ config()
 import {
   TransactionBatchSubmitter,
   AutoFixBatchOptions,
-  BatchSubmitter,
   StateBatchSubmitter,
   STATE_BATCH_SUBMITTER_LOG_TAG,
   TX_BATCH_SUBMITTER_LOG_TAG,
@@ -56,7 +55,7 @@ interface RequiredEnvVars {
   SAFE_MINIMUM_ETHER_BALANCE: 'SAFE_MINIMUM_ETHER_BALANCE'
   // A boolean to clear the pending transactions in the mempool
   // on start up.
-  CLEAR_PENDING_TXS: 'true' | 'false' | 'CLEAR_PENDING_TXS',
+  CLEAR_PENDING_TXS: 'true' | 'false' | 'CLEAR_PENDING_TXS'
 }
 const requiredEnvVars: RequiredEnvVars = {
   L1_NODE_WEB3_URL: 'L1_NODE_WEB3_URL',
@@ -83,6 +82,7 @@ const requiredEnvVars: RequiredEnvVars = {
  * MNEMONIC
  */
 const env = process.env
+const ITX_ENABLED = env.ITX_ENABLED === 'true' ? true : false
 const FRAUD_SUBMISSION_ADDRESS = env.FRAUD_SUBMISSION_ADDRESS || 'no fraud'
 const DISABLE_QUEUE_BATCH_APPEND = !!env.DISABLE_QUEUE_BATCH_APPEND
 const MIN_GAS_PRICE_IN_GWEI = parseInt(env.MIN_GAS_PRICE_IN_GWEI, 10) || 0
@@ -96,8 +96,12 @@ const HD_PATH = env.HD_PATH
 // Auto fix batch options -- TODO: Remove this very hacky config
 const AUTO_FIX_BATCH_OPTIONS_CONF = env.AUTO_FIX_BATCH_OPTIONS_CONF
 const autoFixBatchOptions: AutoFixBatchOptions = {
-  fixDoublePlayedDeposits: (AUTO_FIX_BATCH_OPTIONS_CONF) ? AUTO_FIX_BATCH_OPTIONS_CONF.includes('fixDoublePlayedDeposits') : false,
-  fixMonotonicity: (AUTO_FIX_BATCH_OPTIONS_CONF) ? AUTO_FIX_BATCH_OPTIONS_CONF.includes('fixMonotonicity') : false,
+  fixDoublePlayedDeposits: AUTO_FIX_BATCH_OPTIONS_CONF
+    ? AUTO_FIX_BATCH_OPTIONS_CONF.includes('fixDoublePlayedDeposits')
+    : false,
+  fixMonotonicity: AUTO_FIX_BATCH_OPTIONS_CONF
+    ? AUTO_FIX_BATCH_OPTIONS_CONF.includes('fixMonotonicity')
+    : false,
 }
 
 export const run = async () => {
@@ -113,6 +117,7 @@ export const run = async () => {
 
   const clearPendingTxs = requiredEnvVars.CLEAR_PENDING_TXS === 'true'
 
+  // ITX relies on JsonRpcProvider for the .send() method.
   const l1Provider: Provider = new JsonRpcProvider(
     requiredEnvVars.L1_NODE_WEB3_URL
   )
@@ -122,10 +127,7 @@ export const run = async () => {
 
   let sequencerSigner: Signer
   if (SEQUENCER_PRIVATE_KEY) {
-    sequencerSigner = new Wallet(
-      SEQUENCER_PRIVATE_KEY,
-      l1Provider
-    )
+    sequencerSigner = new Wallet(SEQUENCER_PRIVATE_KEY, l1Provider)
   } else if (MNEMONIC) {
     sequencerSigner = Wallet.fromMnemonic(MNEMONIC, HD_PATH).connect(l1Provider)
   } else {
@@ -134,7 +136,9 @@ export const run = async () => {
 
   const address = await sequencerSigner.getAddress()
   log.info(`Using sequencer address: ${address}`)
-  log.info(`Using address manager address: ${requiredEnvVars.ADDRESS_MANAGER_ADDRESS}`)
+  log.info(
+    `Using address manager address: ${requiredEnvVars.ADDRESS_MANAGER_ADDRESS}`
+  )
 
   const txBatchSubmitter = new TransactionBatchSubmitter(
     sequencerSigner,
@@ -151,6 +155,7 @@ export const run = async () => {
     MAX_GAS_PRICE_IN_GWEI,
     GAS_RETRY_INCREMENT,
     GAS_THRESHOLD_IN_GWEI,
+    ITX_ENABLED,
     getLogger(TX_BATCH_SUBMITTER_LOG_TAG),
     DISABLE_QUEUE_BATCH_APPEND,
     autoFixBatchOptions
@@ -172,6 +177,7 @@ export const run = async () => {
     MAX_GAS_PRICE_IN_GWEI,
     GAS_RETRY_INCREMENT,
     GAS_THRESHOLD_IN_GWEI,
+    ITX_ENABLED,
     getLogger(STATE_BATCH_SUBMITTER_LOG_TAG),
     FRAUD_SUBMISSION_ADDRESS
   )
@@ -193,7 +199,9 @@ export const run = async () => {
               value: 0,
               nonce: i,
             })
-            log.info(`Submitting transaction with nonce: ${i}; hash: ${response.hash}`)
+            log.info(
+              `Submitting transaction with nonce: ${i}; hash: ${response.hash}`
+            )
             await sequencerSigner.provider.waitForTransaction(
               response.hash,
               parseInt(requiredEnvVars.NUM_CONFIRMATIONS, 10)
