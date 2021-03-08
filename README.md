@@ -23,5 +23,18 @@ Examples:
 * Most verbose: `export DEBUG=info*,error*,warn*,debug*`
 
 ## Testing & linting
+
+### Local
+
 - Run unit tests with `yarn test`
 - See lint errors with `yarn lint`; auto-fix with `yarn lint --fix`
+
+### Submission
+
+You may test a submission locally against a local Hardhat fork. 
+
+1. Follow the instructions [here](https://github.com/ethereum-optimism/hardhat) to run a Hardhat node. 
+2. Change the Batch Submitter `.env` field `L1_NODE_WEB3_URL` to the local Hardhat url. Depending on which network you are using, update `ADDRESS_MANAGER_ADDRESS` according to the [Regenesis repo](https://github.com/ethereum-optimism/regenesis).
+3. Also check `L2_NODE_WEB3_URL` is correctly set and has transactions to submit.
+3. Run `yarn build` to build your changes.
+4. Start Batch Submitter with `yarn start`. It will automatically start submitting pending transactions from L2.

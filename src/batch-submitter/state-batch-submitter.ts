@@ -1,7 +1,7 @@
 /* External Imports */
+import { Contract, Signer } from 'ethers'
 import { TransactionReceipt } from '@ethersproject/abstract-provider'
 import { getContractFactory } from '@eth-optimism/contracts'
-import { Contract, Signer } from 'ethers'
 import { Logger, Bytes32 } from '@eth-optimism/core-utils'
 import { OptimismProvider } from '@eth-optimism/provider'
 
@@ -170,6 +170,7 @@ export class StateBatchSubmitter extends BatchSubmitter {
     endBlock: number
   ): Promise<Bytes32[]> {
     const batch: Bytes32[] = []
+
     for (let i = startBlock; i < endBlock; i++) {
       const block = (await this.l2Provider.getBlockWithTransactions(
         i
@@ -183,6 +184,7 @@ export class StateBatchSubmitter extends BatchSubmitter {
         batch.push(block.stateRoot)
       }
     }
+
     let tx = this.chainContract.interface.encodeFunctionData(
       'appendStateBatch',
       [batch, startBlock]
