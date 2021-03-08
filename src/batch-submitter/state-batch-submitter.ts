@@ -91,8 +91,10 @@ export class StateBatchSubmitter extends BatchSubmitter {
       await getContractFactory('OVM_CanonicalTransactionChain', this.signer)
     ).attach(ctcAddress)
 
-    this.log.info(`Using State Commitment Chain: ${this.chainContract.address}`)
-    this.log.info(`Using Canonical Transaction Chain: ${this.ctcContract.address}`)
+    this.log.info('Connected Optimism contracts', {
+      stateCommitmentChain: this.chainContract.address,
+      canonicalTransactionChain: this.ctcContract.address 
+    })
     return
   }
 
@@ -145,7 +147,7 @@ export class StateBatchSubmitter extends BatchSubmitter {
     }
 
     const offsetStartsAtIndex = startBlock - BLOCK_OFFSET // TODO: Remove BLOCK_OFFSET by adding a tx to Geth's genesis
-    this.log.debug('Submitting batch. Tx:', tx)
+    this.log.debug('Submitting batch.', {tx})
     const contractFunction = async (gasPrice): Promise<TransactionReceipt> => {
       const contractTx = await this.chainContract.appendStateBatch(batch, offsetStartsAtIndex, {gasPrice})
       return this.signer.provider.waitForTransaction(

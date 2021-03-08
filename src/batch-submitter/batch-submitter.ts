@@ -92,9 +92,16 @@ export abstract class BatchSubmitter {
     const ether = utils.formatEther(balance)
     const num = parseFloat(ether)
 
-    this.log.info(`Balance ${address}: ${ether} ether`)
+    this.log.info('Checked balance', {
+      address,
+      ether
+    })
+
     if (num < this.minBalanceEther) {
-      this.log.error(`Current balance of ${num} lower than min safe balance of ${this.minBalanceEther}`)
+      this.log.warn('Current balance lower than min safe balance', {
+        current: num,
+        safeBalance: this.minBalanceEther
+      })
     }
   }
 
@@ -128,10 +135,13 @@ export abstract class BatchSubmitter {
     const isTimeoutReached = this.lastBatchSubmissionTimestamp + this.maxBatchSubmissionTime <= Date.now()
     if (batchSizeInBytes < this.minTxSize) {
       if (!isTimeoutReached) {
-        this.log.info(`Batch is too small & max submission timeout not reached. Skipping batch submission...`)
+        this.log.info('Skipping batch submission. Batch too small & max submission timeout not reached.', {
+          batchSizeInBytes,
+          minTxSize: this.minTxSize
+        })
         return false
       }
-      this.log.info(`Timeout reached.`)
+      this.log.info('Timeout reached.')
     }
     return true
   }
@@ -156,7 +166,7 @@ export abstract class BatchSubmitter {
         delay: resubmissionTimeout
       });
 
-    log.debug('Resubmission tx receipt:', receipt)
+    log.debug('Resubmission tx receipt', {receipt})
 
     return receipt
   }
@@ -195,7 +205,7 @@ export abstract class BatchSubmitter {
       this.log
     )
 
-    this.log.debug('Transaction receipt:', receipt)
+    this.log.debug('Transaction receipt:', {receipt})
     this.log.info(successMessage)
     return receipt
   }
