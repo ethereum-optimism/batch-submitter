@@ -31,7 +31,7 @@ Examples:
 
 ### Submission
 
-You test a submission locally against a local Hardhat fork. 
+You may test a submission locally against a local Hardhat fork. 
 
 1. Follow the instructions [here](https://github.com/ethereum-optimism/hardhat) to run a Hardhat node. 
 2. Change the Batch Submitter `.env` field `L1_NODE_WEB3_URL` to the local Hardhat url. Depending on which network you are using, update `ADDRESS_MANAGER_ADDRESS` according to the [Regenesis repo](https://github.com/ethereum-optimism/regenesis).
