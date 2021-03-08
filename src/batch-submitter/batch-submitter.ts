@@ -166,7 +166,7 @@ export abstract class BatchSubmitter {
         delay: resubmissionTimeout
       });
 
-    log.debug('Resubmission tx receipt:', receipt)
+    log.debug('Resubmission tx receipt', {receipt})
 
     return receipt
   }
@@ -205,7 +205,7 @@ export abstract class BatchSubmitter {
       this.log
     )
 
-    this.log.debug('Transaction receipt:', receipt)
+    this.log.debug('Transaction receipt:', {receipt})
     this.log.info(successMessage)
     return receipt
   }
