@@ -105,7 +105,9 @@ export const run = async () => {
 
   for (const [i, val] of Object.entries(requiredEnvVars)) {
     if (!process.env[val]) {
-      log.error(`Missing enviornment variable: ${val}`)
+      log.warn('Missing environment variable', {
+        varName: val
+      })
       exit(1)
     }
     requiredEnvVars[val] = process.env[val]
@@ -133,8 +135,10 @@ export const run = async () => {
   }
 
   const address = await sequencerSigner.getAddress()
-  log.info(`Using sequencer address: ${address}`)
-  log.info(`Using address manager address: ${requiredEnvVars.ADDRESS_MANAGER_ADDRESS}`)
+  log.info('Configured batch submitter addresses', {
+    batchSubmitterAddress: address,
+    addressManagerAddress: requiredEnvVars.ADDRESS_MANAGER_ADDRESS
+  })
 
   const txBatchSubmitter = new TransactionBatchSubmitter(
     sequencerSigner,
@@ -193,7 +197,10 @@ export const run = async () => {
               value: 0,
               nonce: i,
             })
-            log.info(`Submitting transaction with nonce: ${i}; hash: ${response.hash}`)
+            log.info('Submitting empty transaction', {
+              nonce: i,
+              txHash: response.hash
+            })
             await sequencerSigner.provider.waitForTransaction(
               response.hash,
               parseInt(requiredEnvVars.NUM_CONFIRMATIONS, 10)

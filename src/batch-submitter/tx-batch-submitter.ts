@@ -201,7 +201,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
           .error(`More chain elements in L1 (${startBlock}) than in the L2 node (${endBlock}).
                    This shouldn't happen because we don't submit batches if the sequencer is syncing.`)
       }
-      this.log.info(`No txs to submit. Skipping batch submission...`)
+      this.log.info('No txs to submit. Skipping batch submission...')
       return
     }
     return {
@@ -219,8 +219,10 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       ethers.utils.formatUnits(await this.signer.getGasPrice(), 'gwei'), 10
     )
     if (gasPriceInGwei > this.gasThresholdInGwei) {
-      this.log.info(`Current gas price ${gasPriceInGwei} is higher ` +
-                      `than gas price threshold ${this.gasThresholdInGwei}`)
+      this.log.warn('Gas price is higher than gras price threshold; aborting batch submission', {
+        gasPriceInGwei,
+        gasThresholdInGwei: this.gasThresholdInGwei
+      })
       return
     }
 
@@ -232,7 +234,9 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     if (!wasBatchTruncated && !this._shouldSubmitBatch(batchSizeInBytes)) {
       return
     }
-    this.log.debug('Submitting batch. Tx calldata:', batchParams)
+    this.log.debug('Submitting batch.', {
+      calldata: batchParams
+    })
 
     const contractFunction = async (gasPrice): Promise<TransactionReceipt> => {
       const tx = await this.chainContract.appendSequencerBatch(batchParams, {gasPrice})
@@ -261,7 +265,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     this._updateLastL1BlockNumber() // TODO: Remove this
     let batch: Batch = []
     for (let i = startBlock; i < endBlock; i++) {
-      this.log.debug(`Fetching L2BatchElement ${i}`)
+      this.log.debug('Fetching L2BatchElement', { blockNo: i })
       batch.push(await this._getL2BatchElement(i))
     }
     // Fix our batches if we are configured to. TODO: Remove this.
@@ -300,7 +304,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     for (const ele of batch) {
       this.log.debug('Verifying batch element:', ele)
       if (!ele.isSequencerTx) {
-        this.log.debug(`Checking queue equality against L1 queue index: ${nextQueueIndex}`)
+        this.log.debug('Checking queue equality against L1 queue index', {nextQueueIndex})
         if (!(await this._doesQueueElementMatchL1(nextQueueIndex, ele))) {
           return false
         }
@@ -474,7 +478,10 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     const nextQueueIndex = meta.slice(-20, -10)
     const lastTimestamp = parseInt(meta.slice(-30, -20), 16)
     const lastBlockNumber = parseInt(meta.slice(-40, -30), 16)
-    this.log.debug(`Got lastTimestamp: ${lastTimestamp} and lastBlockNumber: ${lastBlockNumber}`)
+    this.log.debug('Retrieved timestamp and block number from CTC', {
+      lastTimestamp,
+      lastBlockNumber
+    })
 
     return {lastTimestamp, lastBlockNumber}
   }
