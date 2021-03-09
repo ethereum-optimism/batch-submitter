@@ -56,7 +56,7 @@ interface RequiredEnvVars {
   SAFE_MINIMUM_ETHER_BALANCE: 'SAFE_MINIMUM_ETHER_BALANCE'
   // A boolean to clear the pending transactions in the mempool
   // on start up.
-  CLEAR_PENDING_TXS: 'true' | 'false' | 'CLEAR_PENDING_TXS',
+  CLEAR_PENDING_TXS: 'true' | 'false' | 'CLEAR_PENDING_TXS'
 }
 const requiredEnvVars: RequiredEnvVars = {
   L1_NODE_WEB3_URL: 'L1_NODE_WEB3_URL',
@@ -96,8 +96,12 @@ const HD_PATH = env.HD_PATH
 // Auto fix batch options -- TODO: Remove this very hacky config
 const AUTO_FIX_BATCH_OPTIONS_CONF = env.AUTO_FIX_BATCH_OPTIONS_CONF
 const autoFixBatchOptions: AutoFixBatchOptions = {
-  fixDoublePlayedDeposits: (AUTO_FIX_BATCH_OPTIONS_CONF) ? AUTO_FIX_BATCH_OPTIONS_CONF.includes('fixDoublePlayedDeposits') : false,
-  fixMonotonicity: (AUTO_FIX_BATCH_OPTIONS_CONF) ? AUTO_FIX_BATCH_OPTIONS_CONF.includes('fixMonotonicity') : false,
+  fixDoublePlayedDeposits: AUTO_FIX_BATCH_OPTIONS_CONF
+    ? AUTO_FIX_BATCH_OPTIONS_CONF.includes('fixDoublePlayedDeposits')
+    : false,
+  fixMonotonicity: AUTO_FIX_BATCH_OPTIONS_CONF
+    ? AUTO_FIX_BATCH_OPTIONS_CONF.includes('fixMonotonicity')
+    : false,
 }
 
 export const run = async () => {
@@ -106,7 +110,7 @@ export const run = async () => {
   for (const [i, val] of Object.entries(requiredEnvVars)) {
     if (!process.env[val]) {
       log.warn('Missing environment variable', {
-        varName: val
+        varName: val,
       })
       exit(1)
     }
@@ -124,10 +128,7 @@ export const run = async () => {
 
   let sequencerSigner: Signer
   if (SEQUENCER_PRIVATE_KEY) {
-    sequencerSigner = new Wallet(
-      SEQUENCER_PRIVATE_KEY,
-      l1Provider
-    )
+    sequencerSigner = new Wallet(SEQUENCER_PRIVATE_KEY, l1Provider)
   } else if (MNEMONIC) {
     sequencerSigner = Wallet.fromMnemonic(MNEMONIC, HD_PATH).connect(l1Provider)
   } else {
@@ -137,7 +138,7 @@ export const run = async () => {
   const address = await sequencerSigner.getAddress()
   log.info('Configured batch submitter addresses', {
     batchSubmitterAddress: address,
-    addressManagerAddress: requiredEnvVars.ADDRESS_MANAGER_ADDRESS
+    addressManagerAddress: requiredEnvVars.ADDRESS_MANAGER_ADDRESS,
   })
 
   const txBatchSubmitter = new TransactionBatchSubmitter(
@@ -199,7 +200,7 @@ export const run = async () => {
             })
             log.info('Submitting empty transaction', {
               nonce: i,
-              txHash: response.hash
+              txHash: response.hash,
             })
             await sequencerSigner.provider.waitForTransaction(
               response.hash,
