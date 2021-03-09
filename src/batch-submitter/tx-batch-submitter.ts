@@ -126,9 +126,9 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       getContractInterface('OVM_CanonicalTransactionChain'),
       this.signer
     )
-    this.log.info(
-      `Initialized new CTC with address: ${this.chainContract.address}`
-    )
+    this.log.info('Initialized new CTC', {
+      address: this.chainContract.address,
+    })
     return
   }
 
@@ -137,7 +137,8 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
 
     if (pendingQueueElements !== 0) {
       this.log.info(
-        `Syncing mode enabled! Skipping batch submission and clearing ${pendingQueueElements} queue elements`
+        'Syncing mode enabled! Skipping batch submission and clearing queue elements',
+        { pendingQueueElements }
       )
 
       if (!this.disableQueueBatchAppend) {
@@ -461,10 +462,12 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
           ele.timestamp < earliestTimestamp ||
           ele.blockNumber < earliestBlockNumber
         ) {
-          this.log.warn(
-            `Fixing timestamp/blockNumber too small.
-             Old ts: ${ele.timestamp} New ts: ${earliestTimestamp} Old bn: ${ele.blockNumber} New bn: ${earliestBlockNumber}`
-          )
+          this.log.warn('Fixing timestamp/blockNumber too small', {
+            oldTimestamp: ele.timestamp,
+            newTimestamp: earliestTimestamp,
+            oldBlockNumber: ele.blockNumber,
+            newBlockNumber: earliestBlockNumber,
+          })
           fixedBatch.push({
             ...ele,
             timestamp: earliestTimestamp,
@@ -477,10 +480,12 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
           ele.timestamp > latestTimestamp ||
           ele.blockNumber > latestBlockNumber
         ) {
-          this.log.warn(
-            `Fixing timestamp/blockNumber too large.
-             Old ts: ${ele.timestamp} New ts: ${latestTimestamp} Old bn: ${ele.blockNumber} New bn: ${latestBlockNumber}`
-          )
+          this.log.warn('Fixing timestamp/blockNumber too large.', {
+            oldTimestamp: ele.timestamp,
+            newTimestamp: latestTimestamp,
+            oldBlockNumber: ele.blockNumber,
+            newBlockNumber: latestBlockNumber,
+          })
           fixedBatch.push({
             ...ele,
             timestamp: latestTimestamp,
