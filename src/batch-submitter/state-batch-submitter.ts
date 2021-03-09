@@ -119,11 +119,11 @@ export class StateBatchSubmitter extends BatchSubmitter {
     if (startBlock >= endBlock) {
       if (startBlock > endBlock) {
         this.log.error(
-          `State commitment chain is larger than transaction chain. This should never happen!`
+          'State commitment chain is larger than transaction chain. This should never happen!'
         )
       }
       this.log.info(
-        `No state commitments to submit. Skipping batch submission...`
+        'No state commitments to submit. Skipping batch submission...'
       )
       return
     }
