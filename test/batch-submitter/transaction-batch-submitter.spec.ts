@@ -75,7 +75,7 @@ describe('TransactionBatchSubmitter', () => {
   let signer: Signer
   let sequencer: Signer
   before(async () => {
-    ; [signer, sequencer] = await ethers.getSigners()
+    ;[signer, sequencer] = await ethers.getSigners()
   })
 
   let AddressManager: Contract
@@ -288,24 +288,27 @@ describe('TransactionBatchSubmitter', () => {
       l2Provider.setL2BlockData({
         queueOrigin: QueueOrigin.L1ToL2,
       } as any)
-      const createBatchSubmitter = (timeout: number): TransactionBatchSubmitter => new TransactionBatchSubmitter(
-        sequencer,
-        l2Provider as any,
-        MIN_TX_SIZE,
-        MAX_TX_SIZE,
-        10,
-        timeout,
-        1,
-        100000,
-        AddressManager.address,
-        1,
-        MIN_GAS_PRICE_IN_GWEI,
-        MAX_GAS_PRICE_IN_GWEI,
-        GAS_RETRY_INCREMENT,
-        GAS_THRESHOLD_IN_GWEI,
-        getLogger(TX_BATCH_SUBMITTER_LOG_TAG),
-        false
-      )
+      const createBatchSubmitter = (
+        timeout: number
+      ): TransactionBatchSubmitter =>
+        new TransactionBatchSubmitter(
+          sequencer,
+          l2Provider as any,
+          MIN_TX_SIZE,
+          MAX_TX_SIZE,
+          10,
+          timeout,
+          1,
+          100000,
+          AddressManager.address,
+          1,
+          MIN_GAS_PRICE_IN_GWEI,
+          MAX_GAS_PRICE_IN_GWEI,
+          GAS_RETRY_INCREMENT,
+          GAS_THRESHOLD_IN_GWEI,
+          getLogger(TX_BATCH_SUBMITTER_LOG_TAG),
+          false
+        )
 
       // Create a batch submitter with a long timeout & make sure it doesn't submit the batches one after another
       const longTimeout = 10_000
@@ -335,11 +338,13 @@ describe('TransactionBatchSubmitter', () => {
       } as any)
 
       const highGasPriceWei = BigNumber.from(200).mul(1_000_000_000)
-      
-      sinon.stub(sequencer, 'getGasPrice').callsFake(async () => highGasPriceWei)
+
+      sinon
+        .stub(sequencer, 'getGasPrice')
+        .callsFake(async () => highGasPriceWei)
 
       const receipt = await batchSubmitter.submitNextBatch()
-      expect(sequencer.getGasPrice).to.have.been.calledOnce;
+      expect(sequencer.getGasPrice).to.have.been.calledOnce
       expect(receipt).to.be.undefined
     })
 
@@ -350,11 +355,11 @@ describe('TransactionBatchSubmitter', () => {
       } as any)
 
       const lowGasPriceWei = BigNumber.from(2).mul(1_000_000_000)
-      
+
       sinon.stub(sequencer, 'getGasPrice').callsFake(async () => lowGasPriceWei)
 
       const receipt = await batchSubmitter.submitNextBatch()
-      expect(sequencer.getGasPrice).to.have.been.calledOnce;
+      expect(sequencer.getGasPrice).to.have.been.calledOnce
       expect(receipt).to.not.be.undefined
     })
   })
@@ -364,7 +369,7 @@ describe('TransactionBatchSubmitter to Ganache', () => {
   let signer
   const server = ganache.server({
     default_balance_ether: 420,
-    blockTime: 2_000
+    blockTime: 2_000,
   })
   const provider = new Web3Provider(ganache.provider())
 
@@ -390,15 +395,12 @@ describe('TransactionBatchSubmitter to Ganache', () => {
         to: DECOMPRESSION_ADDRESS,
         value: 88,
         nonce: 0,
-        gasPrice
+        gasPrice,
       })
 
       const response = await tx
 
-      return signer.provider.waitForTransaction(
-        response.hash,
-        numConfirmations
-      )
+      return signer.provider.waitForTransaction(response.hash, numConfirmations)
     }
 
     const resubmissionConfig = {
@@ -406,7 +408,7 @@ describe('TransactionBatchSubmitter to Ganache', () => {
       resubmissionTimeout: 1_000, // retry every second
       minGasPriceInGwei: 0,
       maxGasPriceInGwei: 100,
-      gasRetryIncrement: 5
+      gasRetryIncrement: 5,
     }
 
     BatchSubmitter.getReceiptWithResubmission(
@@ -421,7 +423,8 @@ describe('TransactionBatchSubmitter to Ganache', () => {
     // Iterate through gasPrices to ensure each entry increases from
     // the last
     const isIncreasing = gasPrices.reduce(
-      (isInc, gasPrice, i, gP) => isInc && gasPrice > gP[i - 1] || Number.NEGATIVE_INFINITY,
+      (isInc, gasPrice, i, gP) =>
+        (isInc && gasPrice > gP[i - 1]) || Number.NEGATIVE_INFINITY,
       true
     )
 
