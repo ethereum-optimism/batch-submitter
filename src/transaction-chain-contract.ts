@@ -1,6 +1,9 @@
 /* External Imports */
 import { Contract, BigNumber } from 'ethers'
-import { TransactionResponse, TransactionRequest } from '@ethersproject/abstract-provider'
+import {
+  TransactionResponse,
+  TransactionRequest,
+} from '@ethersproject/abstract-provider'
 import { keccak256 } from 'ethers/lib/utils'
 import { remove0x, encodeHex } from './utils'
 
@@ -49,7 +52,7 @@ const appendSequencerBatch = async (
   return OVM_CanonicalTransactionChain.signer.sendTransaction({
     to: OVM_CanonicalTransactionChain.address,
     data: '0x' + methodId + calldata,
-    ...options
+    ...options,
   })
 }
 

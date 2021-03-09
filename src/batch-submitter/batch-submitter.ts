@@ -1,8 +1,6 @@
 /* External Imports */
 import { Contract, Signer, utils } from 'ethers'
-import {
-  TransactionReceipt,
-} from '@ethersproject/abstract-provider'
+import { TransactionReceipt } from '@ethersproject/abstract-provider'
 import * as ynatm from '@eth-optimism/ynatm'
 import { Address, Bytes32, Logger } from '@eth-optimism/core-utils'
 import { OptimismProvider } from '@eth-optimism/provider'
@@ -25,9 +23,9 @@ export interface Range {
   end: number
 }
 export interface ResubmissionConfig {
-  resubmissionTimeout: number,
-  minGasPriceInGwei: number,
-  maxGasPriceInGwei: number,
+  resubmissionTimeout: number
+  minGasPriceInGwei: number
+  maxGasPriceInGwei: number
   gasRetryIncrement: number
 }
 
@@ -94,13 +92,13 @@ export abstract class BatchSubmitter {
 
     this.log.info('Checked balance', {
       address,
-      ether
+      ether,
     })
 
     if (num < this.minBalanceEther) {
       this.log.warn('Current balance lower than min safe balance', {
         current: num,
-        safeBalance: this.minBalanceEther
+        safeBalance: this.minBalanceEther,
       })
     }
   }
@@ -113,7 +111,10 @@ export abstract class BatchSubmitter {
     return this.l2Provider.send('eth_chainId', [])
   }
 
-  protected async _getChainAddresses(): Promise<{ ctcAddress: string; sccAddress: string }> {
+  protected async _getChainAddresses(): Promise<{
+    ctcAddress: string
+    sccAddress: string
+  }> {
     const addressManager = (
       await getContractFactory('Lib_AddressManager', this.signer)
     ).attach(this.addressManagerAddress)
@@ -129,16 +130,19 @@ export abstract class BatchSubmitter {
     }
   }
 
-  protected _shouldSubmitBatch(
-    batchSizeInBytes: number
-  ): boolean {
-    const isTimeoutReached = this.lastBatchSubmissionTimestamp + this.maxBatchSubmissionTime <= Date.now()
+  protected _shouldSubmitBatch(batchSizeInBytes: number): boolean {
+    const isTimeoutReached =
+      this.lastBatchSubmissionTimestamp + this.maxBatchSubmissionTime <=
+      Date.now()
     if (batchSizeInBytes < this.minTxSize) {
       if (!isTimeoutReached) {
-        this.log.info('Skipping batch submission. Batch too small & max submission timeout not reached.', {
-          batchSizeInBytes,
-          minTxSize: this.minTxSize
-        })
+        this.log.info(
+          'Skipping batch submission. Batch too small & max submission timeout not reached.',
+          {
+            batchSizeInBytes,
+            minTxSize: this.minTxSize,
+          }
+        )
         return false
       }
       this.log.info('Timeout reached.')
@@ -149,24 +153,24 @@ export abstract class BatchSubmitter {
   public static async getReceiptWithResubmission(
     txFunc: (gasPrice) => Promise<TransactionReceipt>,
     resubmissionConfig: ResubmissionConfig,
-    log: Logger,
+    log: Logger
   ): Promise<TransactionReceipt> {
     const {
       resubmissionTimeout,
       minGasPriceInGwei,
       maxGasPriceInGwei,
-      gasRetryIncrement
+      gasRetryIncrement,
     } = resubmissionConfig
 
     const receipt = await ynatm.send({
-        sendTransactionFunction: txFunc,
-        minGasPrice: ynatm.toGwei(minGasPriceInGwei),
-        maxGasPrice: ynatm.toGwei(maxGasPriceInGwei),
-        gasPriceScalingFunction: ynatm.LINEAR(gasRetryIncrement),
-        delay: resubmissionTimeout
-      });
+      sendTransactionFunction: txFunc,
+      minGasPrice: ynatm.toGwei(minGasPriceInGwei),
+      maxGasPrice: ynatm.toGwei(maxGasPriceInGwei),
+      gasPriceScalingFunction: ynatm.LINEAR(gasRetryIncrement),
+      delay: resubmissionTimeout,
+    })
 
-    log.debug('Resubmission tx receipt', {receipt})
+    log.debug('Resubmission tx receipt', { receipt })
 
     return receipt
   }
@@ -176,10 +180,13 @@ export abstract class BatchSubmitter {
       return this.minGasPriceInGwei
     }
     let minGasPriceInGwei = parseInt(
-      utils.formatUnits(await this.signer.getGasPrice(), 'gwei'), 10
+      utils.formatUnits(await this.signer.getGasPrice(), 'gwei'),
+      10
     )
     if (minGasPriceInGwei > this.maxGasPriceInGwei) {
-      this.log.warn('Minimum gas price is higher than max! Ethereum must be congested...')
+      this.log.warn(
+        'Minimum gas price is higher than max! Ethereum must be congested...'
+      )
       minGasPriceInGwei = this.maxGasPriceInGwei
     }
     return minGasPriceInGwei
@@ -196,7 +203,7 @@ export abstract class BatchSubmitter {
       resubmissionTimeout: this.resubmissionTimeout,
       minGasPriceInGwei: await this._getMinGasPriceInGwei(),
       maxGasPriceInGwei: this.maxGasPriceInGwei,
-      gasRetryIncrement: this.gasRetryIncrement
+      gasRetryIncrement: this.gasRetryIncrement,
     }
 
     const receipt = await BatchSubmitter.getReceiptWithResubmission(
@@ -205,7 +212,7 @@ export abstract class BatchSubmitter {
       this.log
     )
 
-    this.log.debug('Transaction receipt:', {receipt})
+    this.log.debug('Transaction receipt:', { receipt })
     this.log.info(successMessage)
     return receipt
   }
