@@ -31,7 +31,7 @@ import {
   TxType,
   ctcCoder,
   remove0x,
-  getLogger,
+  Logger,
 } from '@eth-optimism/core-utils'
 
 const DECOMPRESSION_ADDRESS = '0x4200000000000000000000000000000000000008'
@@ -187,7 +187,7 @@ describe('TransactionBatchSubmitter', () => {
         MAX_GAS_PRICE_IN_GWEI,
         GAS_RETRY_INCREMENT,
         GAS_THRESHOLD_IN_GWEI,
-        getLogger(TX_BATCH_SUBMITTER_LOG_TAG),
+        new Logger({ name: TX_BATCH_SUBMITTER_LOG_TAG }),
         false
       )
     })
@@ -306,7 +306,7 @@ describe('TransactionBatchSubmitter', () => {
           MAX_GAS_PRICE_IN_GWEI,
           GAS_RETRY_INCREMENT,
           GAS_THRESHOLD_IN_GWEI,
-          getLogger(TX_BATCH_SUBMITTER_LOG_TAG),
+          new Logger({ name: TX_BATCH_SUBMITTER_LOG_TAG }),
           false
         )
 
@@ -414,7 +414,7 @@ describe('TransactionBatchSubmitter to Ganache', () => {
     BatchSubmitter.getReceiptWithResubmission(
       sendTxFunc,
       resubmissionConfig,
-      getLogger(TX_BATCH_SUBMITTER_LOG_TAG)
+      new Logger({ name: TX_BATCH_SUBMITTER_LOG_TAG })
     )
 
     // Wait 1.5s for at least 1 retry
