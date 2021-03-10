@@ -38,13 +38,13 @@ interface RequiredEnvVars {
   // The maximum number of L2 transactions that can ever be in a batch.
   MAX_BATCH_SIZE: 'MAX_BATCH_SIZE'
   // The maximum amount of time (seconds) that we will wait before submitting an under-sized batch.
-  MAX_BATCH_SUBMISSION_TIME: 'MAX_BATCH_SUBMISSION_TIME'
+  MAX_BATCH_SUBMISSION_TIME_S: 'MAX_BATCH_SUBMISSION_TIME_S'
   // The delay in seconds between querying L2 for more transactions / to create a new batch.
-  POLL_INTERVAL: 'POLL_INTERVAL'
+  POLL_INTERVAL_MS: 'POLL_INTERVAL_MS'
   // The number of confirmations which we will wait after appending new batches.
   NUM_CONFIRMATIONS: 'NUM_CONFIRMATIONS'
   // The number of seconds to wait before resubmitting a transaction.
-  RESUBMISSION_TIMEOUT: 'RESUBMISSION_TIMEOUT'
+  RESUBMISSION_TIMEOUT_S: 'RESUBMISSION_TIMEOUT_S'
   // The number of confirmations that we should wait before submitting state roots for CTC elements.
   FINALITY_CONFIRMATIONS: 'FINALITY_CONFIRMATIONS'
   // Whether or not to run the tx batch submitter.
@@ -65,10 +65,10 @@ const requiredEnvVars: RequiredEnvVars = {
   MIN_TX_SIZE: 'MIN_TX_SIZE',
   MAX_TX_SIZE: 'MAX_TX_SIZE',
   MAX_BATCH_SIZE: 'MAX_BATCH_SIZE',
-  MAX_BATCH_SUBMISSION_TIME: 'MAX_BATCH_SUBMISSION_TIME',
-  POLL_INTERVAL: 'POLL_INTERVAL',
+  MAX_BATCH_SUBMISSION_TIME_S: 'MAX_BATCH_SUBMISSION_TIME_S',
+  POLL_INTERVAL_MS: 'POLL_INTERVAL_MS',
   NUM_CONFIRMATIONS: 'NUM_CONFIRMATIONS',
-  RESUBMISSION_TIMEOUT: 'RESUBMISSION_TIMEOUT',
+  RESUBMISSION_TIMEOUT_S: 'RESUBMISSION_TIMEOUT_S',
   FINALITY_CONFIRMATIONS: 'FINALITY_CONFIRMATIONS',
   RUN_TX_BATCH_SUBMITTER: 'RUN_TX_BATCH_SUBMITTER',
   RUN_STATE_BATCH_SUBMITTER: 'RUN_STATE_BATCH_SUBMITTER',
@@ -147,9 +147,9 @@ export const run = async () => {
     parseInt(requiredEnvVars.MIN_TX_SIZE, 10),
     parseInt(requiredEnvVars.MAX_TX_SIZE, 10),
     parseInt(requiredEnvVars.MAX_BATCH_SIZE, 10),
-    parseInt(requiredEnvVars.MAX_BATCH_SUBMISSION_TIME, 10) * 1_000,
+    parseInt(requiredEnvVars.MAX_BATCH_SUBMISSION_TIME_S, 10) * 1_000,
     parseInt(requiredEnvVars.NUM_CONFIRMATIONS, 10),
-    parseInt(requiredEnvVars.RESUBMISSION_TIMEOUT, 10) * 1_000,
+    parseInt(requiredEnvVars.RESUBMISSION_TIMEOUT_S, 10) * 1_000,
     requiredEnvVars.ADDRESS_MANAGER_ADDRESS,
     parseFloat(requiredEnvVars.SAFE_MINIMUM_ETHER_BALANCE),
     MIN_GAS_PRICE_IN_GWEI,
@@ -167,9 +167,9 @@ export const run = async () => {
     parseInt(requiredEnvVars.MIN_TX_SIZE, 10),
     parseInt(requiredEnvVars.MAX_TX_SIZE, 10),
     parseInt(requiredEnvVars.MAX_BATCH_SIZE, 10),
-    parseInt(requiredEnvVars.MAX_BATCH_SUBMISSION_TIME, 10) * 1_000,
+    parseInt(requiredEnvVars.MAX_BATCH_SUBMISSION_TIME_S, 10) * 1_000,
     parseInt(requiredEnvVars.NUM_CONFIRMATIONS, 10),
-    parseInt(requiredEnvVars.RESUBMISSION_TIMEOUT, 10) * 1_000,
+    parseInt(requiredEnvVars.RESUBMISSION_TIMEOUT_S, 10) * 1_000,
     parseInt(requiredEnvVars.FINALITY_CONFIRMATIONS, 10),
     requiredEnvVars.ADDRESS_MANAGER_ADDRESS,
     parseFloat(requiredEnvVars.SAFE_MINIMUM_ETHER_BALANCE),
@@ -223,7 +223,7 @@ export const run = async () => {
       }
       // Sleep
       await new Promise((r) =>
-        setTimeout(r, parseInt(requiredEnvVars.POLL_INTERVAL, 10))
+        setTimeout(r, parseInt(requiredEnvVars.POLL_INTERVAL_MS, 10))
       )
     }
   }
