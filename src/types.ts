@@ -6,7 +6,7 @@ import {
 } from '@ethersproject/abstract-provider'
 
 /* Internal Imports */
-import { EIP155TxData, TxType } from '@eth-optimism/core-utils'
+import { TxType } from '@eth-optimism/core-utils'
 
 export enum QueueOrigin {
   Sequencer = 0,
@@ -27,7 +27,7 @@ export const queueOriginPlainText = {
 export interface L2Transaction extends TransactionResponse {
   l1BlockNumber: number
   l1TxOrigin: string
-  txType: number
+  txType: number // TODO: Remove txType because the only true `txType`s are now just the `queueOrigin`.
   queueOrigin: number
 }
 
@@ -44,7 +44,7 @@ export interface BatchElement {
   stateRoot: string
   isSequencerTx: boolean
   sequencerTxType: undefined | TxType
-  txData: undefined | EIP155TxData
+  txData: undefined | string
   timestamp: number
   blockNumber: number
 }

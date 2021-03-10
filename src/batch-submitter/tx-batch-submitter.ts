@@ -583,19 +583,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       })
       // tx: [0nonce, 1gasprice, 2startgas, 3to, 4value, 5data, 6v, 7r, 8s]
       const tx = ethers.utils.RLP.decode(rawTx)
-      const dummyTx: EIP155TxData = {
-        sig: {
-          v: tx[6],
-          r: tx[7],
-          s: tx[8],
-        },
-        gasLimit,
-        gasPrice,
-        nonce,
-        target: tx[3],
-        data: tx[5],
-        type: TxType.EIP155,
-      }
+      const dummyTx = '0x1234'
       return {
         stateRoot: queueElement.stateRoot,
         isSequencerTx: true,
@@ -679,17 +667,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       if (!block.isSequencerTx) {
         continue
       }
-      let encoding: string
-      if (block.sequencerTxType === TxType.EIP155) {
-        encoding = ctcCoder.eip155TxData.encode(block.txData as EIP155TxData)
-      } else if (block.sequencerTxType === TxType.EthSign) {
-        encoding = ctcCoder.ethSignTxData.encode(block.txData as EthSignTxData)
-      } else {
-        throw new Error(
-          `Trying to build batch with unknown type ${block.sequencerTxType}`
-        )
-      }
-      transactions.push(encoding)
+      transactions.push(block.txData)
     }
 
     return {
@@ -703,13 +681,17 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
 
   private async _getL2BatchElement(blockNumber: number): Promise<BatchElement> {
     const block = await this._getBlock(blockNumber)
-    const txType = block.transactions[0].txType
 
     if (this._isSequencerTx(block)) {
-      if (txType === TxType.EIP155 || txType === TxType.EthSign) {
-        return this._getDefaultEcdsaTxBatchElement(block)
-      } else {
-        throw new Error('Unsupported Tx Type!')
+      return {
+        stateRoot: block.stateRoot,
+        isSequencerTx: true,
+        sequencerTxType: block.transactions[0].txType,
+        // TODO: Remove `as any` when provider is updated
+        // TODO: Rename `txData` to `rawTransaction`
+        txData: (block as any).transactions[0].rawTransaction,
+        timestamp: block.timestamp,
+        blockNumber: block.transactions[0].l1BlockNumber,
       }
     } else {
       return {
@@ -736,31 +718,6 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       block.transactions[0].l1BlockNumber = this.lastL1BlockNumber
     }
     return block
-  }
-
-  private _getDefaultEcdsaTxBatchElement(block: L2Block): BatchElement {
-    const tx: TransactionResponse = block.transactions[0]
-    const txData: EIP155TxData = {
-      sig: {
-        v: tx.v - this.l2ChainId * 2 - 8 - 27,
-        r: tx.r,
-        s: tx.s,
-      },
-      gasLimit: BigNumber.from(tx.gasLimit).toNumber(),
-      gasPrice: BigNumber.from(tx.gasPrice).toNumber(),
-      nonce: tx.nonce,
-      target: tx.to ? tx.to : '00'.repeat(20),
-      data: tx.data,
-      type: block.transactions[0].txType,
-    }
-    return {
-      stateRoot: block.stateRoot,
-      isSequencerTx: true,
-      sequencerTxType: block.transactions[0].txType,
-      txData,
-      timestamp: block.timestamp,
-      blockNumber: block.transactions[0].l1BlockNumber,
-    }
   }
 
   private _isSequencerTx(block: L2Block): boolean {
