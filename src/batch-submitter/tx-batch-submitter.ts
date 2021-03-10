@@ -271,7 +271,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     let batch: Batch = await bPromise.map(
       [...Array(blockRange).keys()],
       (i) => {
-        this.log.debug('Fetching L2BatchElement', { blockNo: i })
+        this.log.debug('Fetching L2BatchElement', { blockNo: startBlock + i })
         return this._getL2BatchElement(startBlock + i)
       },
       { concurrency: 50 }
