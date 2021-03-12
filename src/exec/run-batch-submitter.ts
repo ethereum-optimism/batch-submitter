@@ -1,5 +1,5 @@
 /* External Imports */
-import { getLogger } from '@eth-optimism/core-utils'
+import { Logger } from '@eth-optimism/core-utils'
 import { exit } from 'process'
 import { Signer, Wallet } from 'ethers'
 import {
@@ -22,7 +22,7 @@ import {
 } from '..'
 
 /* Logger */
-const log = getLogger('oe:batch-submitter:init')
+const log = new Logger({ name: 'oe:batch-submitter:init' })
 
 interface RequiredEnvVars {
   // The HTTP provider URL for L1.
@@ -39,7 +39,7 @@ interface RequiredEnvVars {
   MAX_BATCH_SIZE: 'MAX_BATCH_SIZE'
   // The maximum amount of time (seconds) that we will wait before submitting an under-sized batch.
   MAX_BATCH_SUBMISSION_TIME_S: 'MAX_BATCH_SUBMISSION_TIME_S'
-  // The delay in seconds between querying L2 for more transactions / to create a new batch.
+  // The delay in milliseconds between querying L2 for more transactions / to create a new batch.
   POLL_INTERVAL_MS: 'POLL_INTERVAL_MS'
   // The number of confirmations which we will wait after appending new batches.
   NUM_CONFIRMATIONS: 'NUM_CONFIRMATIONS'
@@ -156,7 +156,7 @@ export const run = async () => {
     MAX_GAS_PRICE_IN_GWEI,
     GAS_RETRY_INCREMENT,
     GAS_THRESHOLD_IN_GWEI,
-    getLogger(TX_BATCH_SUBMITTER_LOG_TAG),
+    new Logger({ name: TX_BATCH_SUBMITTER_LOG_TAG }),
     DISABLE_QUEUE_BATCH_APPEND,
     autoFixBatchOptions
   )
@@ -177,7 +177,7 @@ export const run = async () => {
     MAX_GAS_PRICE_IN_GWEI,
     GAS_RETRY_INCREMENT,
     GAS_THRESHOLD_IN_GWEI,
-    getLogger(STATE_BATCH_SUBMITTER_LOG_TAG),
+    new Logger({ name: STATE_BATCH_SUBMITTER_LOG_TAG }),
     FRAUD_SUBMISSION_ADDRESS
   )
 
