@@ -1,9 +1,7 @@
 /* External Imports */
 import { Promise as bPromise } from 'bluebird'
 import { Signer, ethers, Wallet, Contract } from 'ethers'
-import {
-  TransactionReceipt,
-} from '@ethersproject/abstract-provider'
+import { TransactionReceipt } from '@ethersproject/abstract-provider'
 import {
   getContractInterface,
   getContractFactory,
@@ -14,7 +12,7 @@ import {
   Logger,
   TxType,
   txTypePlainText,
-  toRpcHexString
+  toRpcHexString,
 } from '@eth-optimism/core-utils'
 
 /* Internal Imports */
@@ -705,7 +703,10 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
 
   private async _getBlock(blockNumber: number): Promise<L2Block> {
     // TODO(annie): use core-utils toRPCHexString
-    const block = (await this.l2Provider.send('eth_getBlockByNumber', [toRpcHexString(blockNumber), true])) as L2Block
+    const block = (await this.l2Provider.send('eth_getBlockByNumber', [
+      toRpcHexString(blockNumber),
+      true,
+    ])) as L2Block
     console.log('getting block:')
     console.log(block)
     // Convert the tx type to a number
