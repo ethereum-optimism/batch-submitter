@@ -1,8 +1,7 @@
 /* External Imports */
 import { Promise as bPromise } from 'bluebird'
-import { BigNumber, Signer, ethers, Wallet, Contract } from 'ethers'
+import { Signer, ethers, Wallet, Contract } from 'ethers'
 import {
-  TransactionResponse,
   TransactionReceipt,
 } from '@ethersproject/abstract-provider'
 import {
@@ -13,11 +12,9 @@ import { getContractInterface as getNewContractInterface } from 'new-contracts'
 import { OptimismProvider } from '@eth-optimism/provider'
 import {
   Logger,
-  EIP155TxData,
   TxType,
-  ctcCoder,
-  EthSignTxData,
   txTypePlainText,
+  toRpcHexString
 } from '@eth-optimism/core-utils'
 
 /* Internal Imports */
@@ -681,15 +678,16 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
 
   private async _getL2BatchElement(blockNumber: number): Promise<BatchElement> {
     const block = await this._getBlock(blockNumber)
+    console.log('gotten block')
+    console.log(block)
 
     if (this._isSequencerTx(block)) {
       return {
         stateRoot: block.stateRoot,
         isSequencerTx: true,
         sequencerTxType: block.transactions[0].txType,
-        // TODO: Remove `as any` when provider is updated
         // TODO: Rename `txData` to `rawTransaction`
-        txData: (block as any).transactions[0].rawTransaction,
+        txData: block.transactions[0].rawTransaction,
         timestamp: block.timestamp,
         blockNumber: block.transactions[0].l1BlockNumber,
       }
@@ -706,17 +704,14 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
   }
 
   private async _getBlock(blockNumber: number): Promise<L2Block> {
-    const block = (await this.l2Provider.getBlockWithTransactions(
-      blockNumber
-    )) as L2Block
+    // TODO(annie): use core-utils toRPCHexString
+    const block = (await this.l2Provider.send('eth_getBlockByNumber', [toRpcHexString(blockNumber), true])) as L2Block
+    console.log('getting block:')
+    console.log(block)
     // Convert the tx type to a number
     block.transactions[0].txType = txTypePlainText[block.transactions[0].txType]
     block.transactions[0].queueOrigin =
       queueOriginPlainText[block.transactions[0].queueOrigin]
-    // For now just set the l1BlockNumber based on the current l1 block number
-    if (!block.transactions[0].l1BlockNumber) {
-      block.transactions[0].l1BlockNumber = this.lastL1BlockNumber
-    }
     return block
   }
 

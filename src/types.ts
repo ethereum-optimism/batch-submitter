@@ -29,6 +29,7 @@ export interface L2Transaction extends TransactionResponse {
   l1TxOrigin: string
   txType: number // TODO: Remove txType because the only true `txType`s are now just the `queueOrigin`.
   queueOrigin: number
+  rawTransaction: string
 }
 
 export interface L2Block extends BlockWithTransactions {
