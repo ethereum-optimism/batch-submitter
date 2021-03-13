@@ -45,7 +45,7 @@ export interface BatchElement {
   stateRoot: string
   isSequencerTx: boolean
   sequencerTxType: undefined | TxType
-  txData: undefined | string
+  rawTransaction: undefined | string
   timestamp: number
   blockNumber: number
 }

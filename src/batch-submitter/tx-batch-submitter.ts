@@ -583,7 +583,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
         stateRoot: queueElement.stateRoot,
         isSequencerTx: true,
         sequencerTxType: TxType.EIP155,
-        txData: dummyTx,
+        rawTransaction: dummyTx,
         timestamp: queueElement.timestamp,
         blockNumber: queueElement.blockNumber,
       }
@@ -662,7 +662,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       if (!block.isSequencerTx) {
         continue
       }
-      transactions.push(block.txData)
+      transactions.push(block.rawTransaction)
     }
 
     return {
@@ -684,8 +684,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
         stateRoot: block.stateRoot,
         isSequencerTx: true,
         sequencerTxType: block.transactions[0].txType,
-        // TODO: Rename `txData` to `rawTransaction`
-        txData: block.transactions[0].rawTransaction,
+        rawTransaction: block.transactions[0].rawTransaction,
         timestamp: block.timestamp,
         blockNumber: block.transactions[0].l1BlockNumber,
       }
@@ -694,7 +693,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
         stateRoot: block.stateRoot,
         isSequencerTx: false,
         sequencerTxType: undefined,
-        txData: undefined,
+        rawTransaction: undefined,
         timestamp: block.timestamp,
         blockNumber: block.transactions[0].l1BlockNumber,
       }
