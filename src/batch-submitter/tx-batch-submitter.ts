@@ -428,7 +428,10 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       // updateLatestTimestampAndBlockNumber is a helper which updates
       // the latest timestamp and block number based on the pending queue elements.
       const updateLatestTimestampAndBlockNumber = async () => {
-        if ((await this.chainContract.getNumPendingQueueElements()) !== 0) {
+        const pendingQueueElements = await this.chainContract.getNumPendingQueueElements()
+        const nextRemoteQueueElements = await this.chainContract.getNextQueueIndex()
+        const totalQueueElements = pendingQueueElements + nextRemoteQueueElements
+        if (nextQueueIndex < totalQueueElements) {
           const [
             queueEleHash,
             queueTimestamp,
