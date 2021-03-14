@@ -11,7 +11,8 @@
     "build": "tsc -p .",
     "clean": "rimraf build/",
     "lint": "tslint --format stylish --project .",
-    "test": "buidler test --show-stack-traces"
+    "test": "buidler test --show-stack-traces",
+    "fix": "prettier --config prettier-config.json --write \"{src,exec,test}/**/*.ts\""
   },
   "keywords": [
     "optimism",
