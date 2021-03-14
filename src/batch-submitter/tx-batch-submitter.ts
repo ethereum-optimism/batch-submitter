@@ -430,7 +430,8 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       const updateLatestTimestampAndBlockNumber = async () => {
         const pendingQueueElements = await this.chainContract.getNumPendingQueueElements()
         const nextRemoteQueueElements = await this.chainContract.getNextQueueIndex()
-        const totalQueueElements = pendingQueueElements + nextRemoteQueueElements
+        const totalQueueElements =
+          pendingQueueElements + nextRemoteQueueElements
         if (nextQueueIndex < totalQueueElements) {
           const [
             queueEleHash,
