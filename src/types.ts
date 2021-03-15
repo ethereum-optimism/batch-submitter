@@ -27,7 +27,7 @@ export const queueOriginPlainText = {
 export interface L2Transaction extends TransactionResponse {
   l1BlockNumber: number
   l1TxOrigin: string
-  txType: number // TODO: Remove txType because the only true `txType`s are now just the `queueOrigin`.
+  txType: number
   queueOrigin: number
   rawTransaction: string
 }

@@ -23,6 +23,8 @@ export const remove0x = (str: string): string => {
 }
 
 export const formatNumber = (num: any): number => {
-  if (num === "0x") { return 0; }
-  return BigNumber.from(num).toNumber();
+  if (num === '0x') {
+    return 0
+  }
+  return BigNumber.from(num).toNumber()
 }

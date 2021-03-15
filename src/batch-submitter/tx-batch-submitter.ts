@@ -2,12 +2,12 @@
 import { Promise as bPromise } from 'bluebird'
 import { Signer, ethers, Wallet, Contract } from 'ethers'
 import { TransactionReceipt } from '@ethersproject/abstract-provider'
+import { JsonRpcProvider } from '@ethersproject/providers'
 import {
   getContractInterface,
   getContractFactory,
 } from '@eth-optimism/contracts'
 import { getContractInterface as getNewContractInterface } from 'new-contracts'
-import { OptimismProvider } from '@eth-optimism/provider'
 import {
   Logger,
   TxType,
@@ -48,7 +48,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
 
   constructor(
     signer: Signer,
-    l2Provider: OptimismProvider,
+    l2Provider: JsonRpcProvider,
     minTxSize: number,
     maxTxSize: number,
     maxBatchSize: number,
@@ -308,8 +308,6 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     let nextQueueIndex = await this.chainContract.getNextQueueIndex()
     for (const ele of batch) {
       this.log.debug('Verifying batch element', { ele })
-      console.log(`ele:`)
-      console.log(ele)
       if (!ele.isSequencerTx) {
         this.log.debug('Checking queue equality against L1 queue index', {
           nextQueueIndex,
@@ -343,7 +341,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     queueIndex: number,
     queueElement: BatchElement
   ): Promise<boolean> {
-    const logEqualityError = (name,index, expected, got) => {
+    const logEqualityError = (name, index, expected, got) => {
       this.log.error('Observed mismatched values', {
         name,
         index,
@@ -381,11 +379,6 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
         queueElement.blockNumber
       )
     }
-    console.log(`isEqual: ${isEqual}`)
-    console.log(`timeStamp: ${timestamp}`)
-    console.log(`blockNumber: ${blockNumber}`)
-    console.log(`queueElement`)
-    console.log(queueElement)
     return isEqual
   }
 
@@ -689,11 +682,12 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     const sequencerFields = {
       isSequencerTx: false,
       sequencerTxType: undefined,
-      rawTransaction: undefined
+      rawTransaction: undefined,
     }
     if (this._isSequencerTx(block)) {
       sequencerFields.isSequencerTx = true
-      sequencerFields.sequencerTxType = block.transactions[0].txType
+      sequencerFields.sequencerTxType =
+        txTypePlainText[block.transactions[0].txType]
       sequencerFields.rawTransaction = block.transactions[0].rawTransaction
     }
 
@@ -708,18 +702,16 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
   }
 
   private async _getBlock(blockNumber: number): Promise<L2Block> {
-    const block = (await this.l2Provider.send('eth_getBlockByNumber', [
+    return (await this.l2Provider.send('eth_getBlockByNumber', [
       toRpcHexString(blockNumber),
       true,
     ])) as L2Block
-    // Convert the tx type to a number
-    block.transactions[0].txType = txTypePlainText[block.transactions[0].txType]
-    block.transactions[0].queueOrigin =
-      queueOriginPlainText[block.transactions[0].queueOrigin]
-    return block
   }
 
   private _isSequencerTx(block: L2Block): boolean {
-    return block.transactions[0].queueOrigin === QueueOrigin.Sequencer
+    return (
+      queueOriginPlainText[block.transactions[0].queueOrigin] ===
+      QueueOrigin.Sequencer
+    )
   }
 }
