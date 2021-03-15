@@ -24,6 +24,7 @@ import {
 } from '../transaction-chain-contract'
 
 import {
+  formatNumber,
   L2Block,
   BatchElement,
   Batch,
@@ -307,6 +308,8 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     let nextQueueIndex = await this.chainContract.getNextQueueIndex()
     for (const ele of batch) {
       this.log.debug('Verifying batch element', { ele })
+      console.log(`ele:`)
+      console.log(ele)
       if (!ele.isSequencerTx) {
         this.log.debug('Checking queue equality against L1 queue index', {
           nextQueueIndex,
@@ -340,8 +343,9 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     queueIndex: number,
     queueElement: BatchElement
   ): Promise<boolean> {
-    const logEqualityError = (name, index, expected, got) => {
+    const logEqualityError = (name,index, expected, got) => {
       this.log.error('Observed mismatched values', {
+        name,
         index,
         expected,
         got,
@@ -377,6 +381,11 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
         queueElement.blockNumber
       )
     }
+    console.log(`isEqual: ${isEqual}`)
+    console.log(`timeStamp: ${timestamp}`)
+    console.log(`blockNumber: ${blockNumber}`)
+    console.log(`queueElement`)
+    console.log(queueElement)
     return isEqual
   }
 
@@ -676,38 +685,33 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
 
   private async _getL2BatchElement(blockNumber: number): Promise<BatchElement> {
     const block = await this._getBlock(blockNumber)
-    console.log('gotten block')
-    console.log(block)
 
-    if (this._isSequencerTx(block)) {
-      return {
-        stateRoot: block.stateRoot,
-        isSequencerTx: true,
-        sequencerTxType: block.transactions[0].txType,
-        rawTransaction: block.transactions[0].rawTransaction,
-        timestamp: block.timestamp,
-        blockNumber: block.transactions[0].l1BlockNumber,
-      }
-    } else {
-      return {
-        stateRoot: block.stateRoot,
-        isSequencerTx: false,
-        sequencerTxType: undefined,
-        rawTransaction: undefined,
-        timestamp: block.timestamp,
-        blockNumber: block.transactions[0].l1BlockNumber,
-      }
+    const sequencerFields = {
+      isSequencerTx: false,
+      sequencerTxType: undefined,
+      rawTransaction: undefined
     }
+    if (this._isSequencerTx(block)) {
+      sequencerFields.isSequencerTx = true
+      sequencerFields.sequencerTxType = block.transactions[0].txType
+      sequencerFields.rawTransaction = block.transactions[0].rawTransaction
+    }
+
+    const batchElement = {
+      ...sequencerFields,
+      stateRoot: block.stateRoot,
+      timestamp: formatNumber(block.timestamp),
+      blockNumber: formatNumber(block.transactions[0].l1BlockNumber),
+    }
+
+    return batchElement
   }
 
   private async _getBlock(blockNumber: number): Promise<L2Block> {
-    // TODO(annie): use core-utils toRPCHexString
     const block = (await this.l2Provider.send('eth_getBlockByNumber', [
       toRpcHexString(blockNumber),
       true,
     ])) as L2Block
-    console.log('getting block:')
-    console.log(block)
     // Convert the tx type to a number
     block.transactions[0].txType = txTypePlainText[block.transactions[0].txType]
     block.transactions[0].queueOrigin =

@@ -83,31 +83,11 @@ export class MockchainProvider extends OptimismProvider {
         if (params.length === 0) {
           throw new Error(`Invalid params for ${endpoint}`)
         }
-        // TODO(annieke): use core-utils from RPC hex string
         const blockNumber = BigNumber.from(params[0]).toNumber()
         return this.mockBlocks[blockNumber]
       default:
         throw new Error('Unsupported endpoint!')
     }
-    //  if (endpoint === 'eth_chainId') {
-    //    return this.chainId()
-    //  }
-    //  if (endpoint === 'rollup_getInfo') {
-    //    const info: RollupInfo = {
-    //      mode: 'sequencer',
-    //      syncing: false,
-    //      ethContext: {
-    //        timestamp: 0,
-    //        blockNumber: 0,
-    //      },
-    //      rollupContext: {
-    //        index: 0,
-    //        queueIndex: 0,
-    //      },
-    //    }
-    //    return info
-    //  }
-    //  throw new Error('Unsupported endpoint!')
   }
 
   public setNumBlocksToReturn(numBlocks: number): void {
