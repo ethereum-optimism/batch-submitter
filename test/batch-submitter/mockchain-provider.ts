@@ -1,9 +1,10 @@
 /* External Imports */
-import { OptimismProvider } from '@eth-optimism/provider'
+import { BigNumber } from 'ethers'
 import {
   BlockWithTransactions,
   TransactionResponse,
 } from '@ethersproject/abstract-provider'
+import { JsonRpcProvider } from '@ethersproject/providers'
 
 /* Internal Imports */
 import { L2Transaction, L2Block, RollupInfo } from '../../src'
@@ -18,6 +19,7 @@ interface UnformattedL2Transaction extends TransactionResponse {
   l1MessageSender: string
   signatureHashType: string
   queueOrigin: string
+  rawTransaction: string
 }
 
 interface UnformattedL2Block extends BlockWithTransactions {
@@ -25,7 +27,7 @@ interface UnformattedL2Block extends BlockWithTransactions {
   transactions: [UnformattedL2Transaction]
 }
 
-export class MockchainProvider extends OptimismProvider {
+export class MockchainProvider extends JsonRpcProvider {
   public mockBlockNumber: number = 1
   public numBlocksToReturn: number = 2
   public mockBlocks: L2Block[] = []
@@ -59,26 +61,33 @@ export class MockchainProvider extends OptimismProvider {
     return this.mockBlockNumber
   }
 
-  public async send(endpoint: string, params: []): Promise<any> {
-    if (endpoint === 'eth_chainId') {
-      return this.chainId()
+  public async send(endpoint: string, params: any[]): Promise<any> {
+    switch (endpoint) {
+      case 'eth_chainId':
+        return this.chainId()
+      case 'rollup_getInfo':
+        const info: RollupInfo = {
+          mode: 'sequencer',
+          syncing: false,
+          ethContext: {
+            timestamp: 0,
+            blockNumber: 0,
+          },
+          rollupContext: {
+            index: 0,
+            queueIndex: 0,
+          },
+        }
+        return info
+      case 'eth_getBlockByNumber':
+        if (params.length === 0) {
+          throw new Error(`Invalid params for ${endpoint}`)
+        }
+        const blockNumber = BigNumber.from(params[0]).toNumber()
+        return this.mockBlocks[blockNumber]
+      default:
+        throw new Error('Unsupported endpoint!')
     }
-    if (endpoint === 'rollup_getInfo') {
-      const info: RollupInfo = {
-        mode: 'sequencer',
-        syncing: false,
-        ethContext: {
-          timestamp: 0,
-          blockNumber: 0,
-        },
-        rollupContext: {
-          index: 0,
-          queueIndex: 0,
-        },
-      }
-      return info
-    }
-    throw new Error('Unsupported endpoint!')
   }
 
   public setNumBlocksToReturn(numBlocks: number): void {
