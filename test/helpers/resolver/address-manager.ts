@@ -1,5 +1,5 @@
 /* External Imports */
-import { ethers } from '@nomiclabs/buidler'
+import { ethers } from 'hardhat'
 import { Contract } from 'ethers'
 import { getContractFactory as ctFactory } from '@eth-optimism/contracts'
 

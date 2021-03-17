@@ -1,7 +1,8 @@
 import { expect, chai } from '../setup'
 
 /* External Imports */
-import { ethers } from '@nomiclabs/buidler'
+import { ethers } from 'hardhat'
+import '@nomiclabs/hardhat-ethers'
 import { Signer, ContractFactory, Contract, BigNumber } from 'ethers'
 import ganache from 'ganache-core'
 import sinon from 'sinon'
@@ -92,24 +93,24 @@ describe('TransactionBatchSubmitter', () => {
       DECOMPRESSION_ADDRESS
     )
 
-    Mock__OVM_ExecutionManager = smockit(
-      (await getContractFactory('OVM_ExecutionManager')) as any
+    Mock__OVM_ExecutionManager = await smockit(
+      await getContractFactory('OVM_ExecutionManager')
     )
 
-    Mock__OVM_StateCommitmentChain = smockit(
-      (await getContractFactory('OVM_StateCommitmentChain')) as any
+    Mock__OVM_StateCommitmentChain = await smockit(
+      await getContractFactory('OVM_StateCommitmentChain')
     )
 
     await setProxyTarget(
       AddressManager,
       'OVM_ExecutionManager',
-      Mock__OVM_ExecutionManager as any
+      Mock__OVM_ExecutionManager
     )
 
     await setProxyTarget(
       AddressManager,
       'OVM_StateCommitmentChain',
-      Mock__OVM_StateCommitmentChain as any
+      Mock__OVM_StateCommitmentChain
     )
 
     Mock__OVM_StateCommitmentChain.smocked.canOverwrite.will.return.with(false)
