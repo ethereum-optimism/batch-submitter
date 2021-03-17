@@ -4,7 +4,7 @@ import { defaultAccounts } from 'ethereum-waffle'
 
 export const FORCE_INCLUSION_PERIOD_SECONDS = 600
 export const DEFAULT_ACCOUNTS = defaultAccounts
-export const DEFAULT_ACCOUNTS_BUIDLER = defaultAccounts.map((account) => {
+export const DEFAULT_ACCOUNTS_HARDHAT = defaultAccounts.map((account) => {
   return {
     balance: ethers.BigNumber.from(account.balance).toHexString(),
     privateKey: account.secretKey,

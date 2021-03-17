@@ -2,6 +2,7 @@ build
 dist
 node_modules
 .env
+cache/*
 
 # vim
 *.swp
