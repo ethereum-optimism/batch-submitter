@@ -7,6 +7,7 @@ import {
   JsonRpcProvider,
   TransactionReceipt,
 } from '@ethersproject/providers'
+import { OptimismProvider } from '@eth-optimism/provider'
 import { config } from 'dotenv'
 config()
 
@@ -14,6 +15,7 @@ config()
 import {
   TransactionBatchSubmitter,
   AutoFixBatchOptions,
+  BatchSubmitter,
   StateBatchSubmitter,
   STATE_BATCH_SUBMITTER_LOG_TAG,
   TX_BATCH_SUBMITTER_LOG_TAG,
@@ -120,7 +122,7 @@ export const run = async () => {
   const l1Provider: Provider = new JsonRpcProvider(
     requiredEnvVars.L1_NODE_WEB3_URL
   )
-  const l2Provider: JsonRpcProvider = new JsonRpcProvider(
+  const l2Provider: OptimismProvider = new OptimismProvider(
     requiredEnvVars.L2_NODE_WEB3_URL
   )
 

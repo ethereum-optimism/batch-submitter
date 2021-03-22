@@ -1,9 +1,9 @@
 /* External Imports */
 import { Contract, Signer } from 'ethers'
 import { TransactionReceipt } from '@ethersproject/abstract-provider'
-import { JsonRpcProvider } from '@ethersproject/providers'
 import { getContractFactory } from '@eth-optimism/contracts'
-import { Logger, Bytes32, toRpcHexString } from '@eth-optimism/core-utils'
+import { Logger, Bytes32 } from '@eth-optimism/core-utils'
+import { OptimismProvider } from '@eth-optimism/provider'
 
 /* Internal Imports */
 import { L2Block } from '..'
@@ -21,7 +21,7 @@ export class StateBatchSubmitter extends BatchSubmitter {
 
   constructor(
     signer: Signer,
-    l2Provider: JsonRpcProvider,
+    l2Provider: OptimismProvider,
     minTxSize: number,
     maxTxSize: number,
     maxBatchSize: number,
@@ -173,10 +173,9 @@ export class StateBatchSubmitter extends BatchSubmitter {
     const batch: Bytes32[] = []
 
     for (let i = startBlock; i < endBlock; i++) {
-      const block = (await this.l2Provider.send('eth_getBlockByNumber', [
-        toRpcHexString(i),
-        true,
-      ])) as L2Block
+      const block = (await this.l2Provider.getBlockWithTransactions(
+        i
+      )) as L2Block
       if (block.transactions[0].from === this.fraudSubmissionAddress) {
         batch.push(
           '0xbad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1'
