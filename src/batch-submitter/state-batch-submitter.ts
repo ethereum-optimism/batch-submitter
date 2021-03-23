@@ -175,21 +175,15 @@ export class StateBatchSubmitter extends BatchSubmitter {
     const blockRange = endBlock - startBlock
     const batch: Bytes32[] = await bPromise.map(
       [...Array(blockRange).keys()],
-      (i) => {
-        const blockPromise = this.l2Provider.getBlockWithTransactions(i) // as L2Block
-        return blockPromise.then((res) => {
-          const block = res as L2Block
-
-          // DEBUG
-          console.log(block)
-          console.log('block here!')
-
-          if (block.transactions[0].from === this.fraudSubmissionAddress) {
-            this.fraudSubmissionAddress = 'no fraud'
-            return '0xbad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1'
-          }
-          return block.stateRoot
-        })
+      async (i: number) => {
+        const block = (await this.l2Provider.getBlockWithTransactions(
+          startBlock + i
+        )) as L2Block
+        if (block.transactions[0].from === this.fraudSubmissionAddress) {
+          this.fraudSubmissionAddress = 'no fraud'
+          return '0xbad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1'
+        }
+        return block.stateRoot
       }
     )
 
