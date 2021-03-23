@@ -9,7 +9,6 @@ import { OptimismProvider } from '@eth-optimism/provider'
 /* Internal Imports */
 import { L2Block } from '..'
 import { RollupInfo, Range, BatchSubmitter, BLOCK_OFFSET } from '.'
-import { start } from 'repl'
 
 export class StateBatchSubmitter extends BatchSubmitter {
   // TODO: Change this so that we calculate start = scc.totalElements() and end = ctc.totalElements()!
@@ -186,20 +185,6 @@ export class StateBatchSubmitter extends BatchSubmitter {
         return block.stateRoot
       }
     )
-
-    for (let i = startBlock; i < endBlock; i++) {
-      const block = (await this.l2Provider.getBlockWithTransactions(
-        i
-      )) as L2Block
-      if (block.transactions[0].from === this.fraudSubmissionAddress) {
-        batch.push(
-          '0xbad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1'
-        )
-        this.fraudSubmissionAddress = 'no fraud'
-      } else {
-        batch.push(block.stateRoot)
-      }
-    }
 
     let tx = this.chainContract.interface.encodeFunctionData(
       'appendStateBatch',
