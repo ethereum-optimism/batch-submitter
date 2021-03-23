@@ -1,4 +1,5 @@
 /* External Imports */
+import { Promise as bPromise } from 'bluebird'
 import { Contract, Signer } from 'ethers'
 import { TransactionReceipt } from '@ethersproject/abstract-provider'
 import { getContractFactory } from '@eth-optimism/contracts'
@@ -8,6 +9,7 @@ import { OptimismProvider } from '@eth-optimism/provider'
 /* Internal Imports */
 import { L2Block } from '..'
 import { RollupInfo, Range, BatchSubmitter, BLOCK_OFFSET } from '.'
+import { start } from 'repl'
 
 export class StateBatchSubmitter extends BatchSubmitter {
   // TODO: Change this so that we calculate start = scc.totalElements() and end = ctc.totalElements()!
@@ -108,8 +110,6 @@ export class StateBatchSubmitter extends BatchSubmitter {
     const startBlock: number =
       (await this.chainContract.getTotalElements()).toNumber() + BLOCK_OFFSET
     // We will submit state roots for txs which have been in the tx chain for a while.
-    const callBlockNumber: number =
-      (await this.signer.provider.getBlockNumber()) - this.finalityConfirmations
     const totalElements: number =
       (await this.ctcContract.getTotalElements()).toNumber() + BLOCK_OFFSET
     const endBlock: number = Math.min(
@@ -172,7 +172,26 @@ export class StateBatchSubmitter extends BatchSubmitter {
     startBlock: number,
     endBlock: number
   ): Promise<Bytes32[]> {
-    const batch: Bytes32[] = []
+    const blockRange = endBlock - startBlock
+    const batch: Bytes32[] = await bPromise.map(
+      [...Array(blockRange).keys()],
+      (i) => {
+        const blockPromise = this.l2Provider.getBlockWithTransactions(i) // as L2Block
+        return blockPromise.then((res) => {
+          const block = res as L2Block
+
+          // DEBUG
+          console.log(block)
+          console.log('block here!')
+
+          if (block.transactions[0].from === this.fraudSubmissionAddress) {
+            this.fraudSubmissionAddress = 'no fraud'
+            return '0xbad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1'
+          }
+          return block.stateRoot
+        })
+      }
+    )
 
     for (let i = startBlock; i < endBlock; i++) {
       const block = (await this.l2Provider.getBlockWithTransactions(
