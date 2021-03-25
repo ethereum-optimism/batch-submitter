@@ -440,7 +440,7 @@ describe('BatchSubmitter', () => {
       )
 
       // submit a batch of transactions to enable state batch submission
-      const txReceipt = await txBatchSubmitter.submitNextBatch()
+      await txBatchSubmitter.submitNextBatch()
 
       stateBatchSubmitter = new StateBatchSubmitter(
         sequencer,
@@ -466,10 +466,15 @@ describe('BatchSubmitter', () => {
     describe('submitNextBatch', () => {
       it('should submit a state batch after a transaction batch', async () => {
         const receipt = await stateBatchSubmitter.submitNextBatch()
+        expect(receipt).to.not.be.undefined
+
         const iface = new ethers.utils.Interface(scc.abi)
         const parsedLogs = iface.parseLog(receipt.logs[0])
 
         expect(parsedLogs.eventFragment.name).to.eq('StateBatchAppended')
+        expect(parsedLogs.args._batchIndex.toNumber()).to.eq(0)
+        expect(parsedLogs.args._batchSize.toNumber()).to.eq(6)
+        expect(parsedLogs.args._prevTotalElements.toNumber()).to.eq(0)
       })
     })
   })
