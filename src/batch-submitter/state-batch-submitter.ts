@@ -115,6 +115,7 @@ export class StateBatchSubmitter extends BatchSubmitter {
       startBlock + this.maxBatchSize,
       totalElements
     )
+
     if (startBlock >= endBlock) {
       if (startBlock > endBlock) {
         this.log.error(
@@ -197,6 +198,7 @@ export class StateBatchSubmitter extends BatchSubmitter {
         startBlock,
       ])
     }
+
     return batch
   }
 }
