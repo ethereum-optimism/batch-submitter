@@ -184,7 +184,8 @@ export class StateBatchSubmitter extends BatchSubmitter {
           return '0xbad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1'
         }
         return block.stateRoot
-      }
+      },
+      { concurrency: 100 }
     )
 
     let tx = this.chainContract.interface.encodeFunctionData(

@@ -88,7 +88,6 @@ describe('BatchSubmitter', () => {
   let AddressManager: Contract
   let Mock__OVM_ExecutionManager: MockContract
   let Mock__OVM_BondManager: MockContract
-  // TODO(anieke): Remove SCC smock references
   let Mock__OVM_StateCommitmentChain: MockContract
   before(async () => {
     AddressManager = await makeAddressManager()
