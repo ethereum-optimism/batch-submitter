@@ -148,11 +148,13 @@ export class StateBatchSubmitter extends BatchSubmitter {
 
     const offsetStartsAtIndex = startBlock - BLOCK_OFFSET // TODO: Remove BLOCK_OFFSET by adding a tx to Geth's genesis
     this.log.debug('Submitting batch.', { tx })
+
+    const nonce = await this.signer.getTransactionCount()
     const contractFunction = async (gasPrice): Promise<TransactionReceipt> => {
       const contractTx = await this.chainContract.appendStateBatch(
         batch,
         offsetStartsAtIndex,
-        { gasPrice }
+        { nonce, gasPrice }
       )
       return this.signer.provider.waitForTransaction(
         contractTx.hash,
