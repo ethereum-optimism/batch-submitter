@@ -153,6 +153,7 @@ export abstract class BatchSubmitter {
         lastBatchSubmissionTimestamp: this.lastBatchSubmissionTimestamp,
         currentTimestamp,
       })
+      return true
     }
     this.log.info('Sufficient batch size, proceeding with batch submission.', {
       batchSizeInBytes,
