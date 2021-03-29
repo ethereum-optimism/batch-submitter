@@ -169,7 +169,7 @@ export const run = async () => {
     l2Provider,
     parseInt(requiredEnvVars.MIN_L1_TX_SIZE, 10),
     parseInt(requiredEnvVars.MAX_L1_TX_SIZE, 10),
-    parseInt(requiredEnvVars.MAX_TX_BATCH_COUNT, 10),
+    parseInt(requiredEnvVars.MAX_STATE_BATCH_COUNT, 10),
     parseInt(requiredEnvVars.MAX_BATCH_SUBMISSION_TIME, 10) * 1_000,
     parseInt(requiredEnvVars.NUM_CONFIRMATIONS, 10),
     parseInt(requiredEnvVars.RESUBMISSION_TIMEOUT, 10) * 1_000,
