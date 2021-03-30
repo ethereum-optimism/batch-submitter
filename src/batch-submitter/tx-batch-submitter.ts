@@ -237,7 +237,8 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       batchParams,
       wasBatchTruncated,
     ] = await this._generateSequencerBatchParams(startBlock, endBlock)
-    const batchSizeInBytes = encodeAppendSequencerBatch(batchParams).length * 2
+    const batchSizeInBytes = encodeAppendSequencerBatch(batchParams).length / 2
+    console.log(encodeAppendSequencerBatch(batchParams))
 
     // Only submit batch if one of the following is true:
     // 1. it was truncated
