@@ -283,7 +283,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
         this.log.debug('Fetching L2BatchElement', { blockNo: startBlock + i })
         return this._getL2BatchElement(startBlock + i)
       },
-      { concurrency: 50 }
+      { concurrency: 100 }
     )
 
     // Fix our batches if we are configured to. TODO: Remove this.
