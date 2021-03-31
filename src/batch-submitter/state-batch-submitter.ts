@@ -142,7 +142,7 @@ export class StateBatchSubmitter extends BatchSubmitter {
       'appendStateBatch',
       [batch, startBlock]
     )
-    if (!this._shouldSubmitBatch(tx.length * 2)) {
+    if (!this._shouldSubmitBatch(tx.length / 2)) {
       return
     }
 
