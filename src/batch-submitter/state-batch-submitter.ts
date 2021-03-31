@@ -176,6 +176,7 @@ export class StateBatchSubmitter extends BatchSubmitter {
     const batch: Bytes32[] = await bPromise.map(
       [...Array(blockRange).keys()],
       async (i: number) => {
+        this.log.debug('Fetching L2BatchElement', { blockNo: startBlock + i })
         const block = (await this.l2Provider.getBlockWithTransactions(
           startBlock + i
         )) as L2Block
