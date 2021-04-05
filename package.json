@@ -1,6 +1,6 @@
 {
   "name": "@eth-optimism/batch-submitter",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "[Optimism] Batch submission for sequencer & aggregators",
   "main": "build/index.js",
   "files": [
