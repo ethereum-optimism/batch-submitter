@@ -82,6 +82,10 @@ export class StateBatchSubmitter extends BatchSubmitter {
       sccAddress === this.chainContract.address &&
       ctcAddress === this.ctcContract.address
     ) {
+      this.log.debug('Chain contract already initialized', {
+        sccAddress,
+        ctcAddress,
+      })
       return
     }
 
@@ -142,7 +146,12 @@ export class StateBatchSubmitter extends BatchSubmitter {
       'appendStateBatch',
       [batch, startBlock]
     )
-    if (!this._shouldSubmitBatch(tx.length / 2)) {
+    const batchSizeInBytes = tx.length / 2
+    this.log.debug('State batch generated', {
+      batchSizeInBytes,
+    })
+
+    if (!this._shouldSubmitBatch(batchSizeInBytes)) {
       return
     }
 
@@ -156,6 +165,9 @@ export class StateBatchSubmitter extends BatchSubmitter {
         offsetStartsAtIndex,
         { nonce, gasPrice }
       )
+      this.log.info('Submitting appendStateBatch transaction', {
+        nonce,
+      })
       return this.signer.provider.waitForTransaction(
         contractTx.hash,
         this.numConfirmations
@@ -181,6 +193,7 @@ export class StateBatchSubmitter extends BatchSubmitter {
           startBlock + i
         )) as L2Block
         if (block.transactions[0].from === this.fraudSubmissionAddress) {
+          this.log.warn('Found transaction from fraud submission address')
           this.fraudSubmissionAddress = 'no fraud'
           return '0xbad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1'
         }
@@ -193,7 +206,10 @@ export class StateBatchSubmitter extends BatchSubmitter {
       'appendStateBatch',
       [batch, startBlock]
     )
-    while (tx.length > this.maxTxSize) {
+    while (tx.length / 2 > this.maxTxSize) {
+      this.log.debug('Splicing batch...', {
+        batchSizeInBytes: tx.length / 2,
+      })
       batch.splice(Math.ceil((batch.length * 2) / 3)) // Delete 1/3rd of all of the batch elements
       tx = this.chainContract.interface.encodeFunctionData('appendStateBatch', [
         batch,
