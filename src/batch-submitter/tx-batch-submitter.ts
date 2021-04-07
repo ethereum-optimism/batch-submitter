@@ -158,6 +158,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
           })
           this.log.info('Submitting appendQueueBatch transaction', {
             nonce,
+            txHash: tx.hash,
           })
           return this.signer.provider.waitForTransaction(
             tx.hash,
@@ -275,6 +276,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       })
       this.log.info('Submitting appendSequencerBatch transaction', {
         nonce,
+        txHash: tx.hash,
       })
       return this.signer.provider.waitForTransaction(
         tx.hash,

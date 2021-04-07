@@ -149,6 +149,7 @@ export class StateBatchSubmitter extends BatchSubmitter {
     const batchSizeInBytes = remove0x(tx).length / 2
     this.log.debug('State batch generated', {
       batchSizeInBytes,
+      tx,
     })
 
     if (!this._shouldSubmitBatch(batchSizeInBytes)) {
@@ -167,6 +168,7 @@ export class StateBatchSubmitter extends BatchSubmitter {
       )
       this.log.info('Submitting appendStateBatch transaction', {
         nonce,
+        txHash: contractTx.hash,
       })
       return this.signer.provider.waitForTransaction(
         contractTx.hash,
@@ -192,8 +194,12 @@ export class StateBatchSubmitter extends BatchSubmitter {
         const block = (await this.l2Provider.getBlockWithTransactions(
           startBlock + i
         )) as L2Block
-        if (block.transactions[0].from === this.fraudSubmissionAddress) {
-          this.log.warn('Found transaction from fraud submission address')
+        const blockTx = block.transactions[0]
+        if (blockTx.from === this.fraudSubmissionAddress) {
+          this.log.warn('Found transaction from fraud submission address', {
+            txHash: blockTx.hash,
+            fraudSubmissionAddress: this.fraudSubmissionAddress,
+          })
           this.fraudSubmissionAddress = 'no fraud'
           return '0xbad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1bad1'
         }
