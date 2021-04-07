@@ -6,6 +6,17 @@ Contains an executable batch submitter service which watches L1 and a local L2 n
 ## Configuration
 All configuration is done via environment variables. See all variables at [.env.example](.env.example); copy into a `.env` file before running.
 
+## Prerequisite Software
+
+Please make sure you've installed the following before continuing:
+
+- [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
+- [Node.js](https://nodejs.org/en/download/)
+- [Yarn](https://classic.yarnpkg.com/en/docs/install#mac-stable)
+- `build-essential`
+- `libusb-dev`
+- `libudev-dev`
+
 ## Building & Running
 1. Make sure dependencies are installed just run `yarn` in the base directory
 2. Build `yarn build`
