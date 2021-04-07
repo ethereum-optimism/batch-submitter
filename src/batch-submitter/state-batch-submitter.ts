@@ -3,7 +3,7 @@ import { Promise as bPromise } from 'bluebird'
 import { Contract, Signer } from 'ethers'
 import { TransactionReceipt } from '@ethersproject/abstract-provider'
 import { getContractFactory } from '@eth-optimism/contracts'
-import { Logger, Bytes32 } from '@eth-optimism/core-utils'
+import { Logger, Bytes32, remove0x } from '@eth-optimism/core-utils'
 import { OptimismProvider } from '@eth-optimism/provider'
 
 /* Internal Imports */
@@ -146,7 +146,7 @@ export class StateBatchSubmitter extends BatchSubmitter {
       'appendStateBatch',
       [batch, startBlock]
     )
-    const batchSizeInBytes = tx.length / 2
+    const batchSizeInBytes = remove0x(tx).length / 2
     this.log.debug('State batch generated', {
       batchSizeInBytes,
     })
@@ -206,11 +206,12 @@ export class StateBatchSubmitter extends BatchSubmitter {
       'appendStateBatch',
       [batch, startBlock]
     )
+    tx = remove0x(tx)
     while (tx.length / 2 > this.maxTxSize) {
+      batch.splice(Math.ceil((batch.length * 2) / 3)) // Delete 1/3rd of all of the batch elements
       this.log.debug('Splicing batch...', {
         batchSizeInBytes: tx.length / 2,
       })
-      batch.splice(Math.ceil((batch.length * 2) / 3)) // Delete 1/3rd of all of the batch elements
       tx = this.chainContract.interface.encodeFunctionData('appendStateBatch', [
         batch,
         startBlock,
