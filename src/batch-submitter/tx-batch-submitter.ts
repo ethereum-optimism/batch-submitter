@@ -156,9 +156,12 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
             nonce,
             gasPrice,
           })
-          this.log.info('Submitting appendQueueBatch transaction', {
+          this.log.info('Submitted appendQueueBatch transaction', {
             nonce,
             txHash: tx.hash,
+            contractAddr: this.chainContract.address,
+            from: tx.from,
+            data: tx.data,
           })
           return this.signer.provider.waitForTransaction(
             tx.hash,
@@ -208,11 +211,19 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     // TODO: Remove BLOCK_OFFSET by adding a tx to Geth's genesis
     const startBlock =
       (await this.chainContract.getTotalElements()).toNumber() + BLOCK_OFFSET
+    this.log.info('Retrieved start block number from CTC', {
+      startBlock,
+    })
+
     const endBlock =
       Math.min(
         startBlock + this.maxBatchSize,
         await this.l2Provider.getBlockNumber()
       ) + 1 // +1 because the `endBlock` is *exclusive*
+    this.log.info('Retrieved end block number from L2 sequencer', {
+      endBlock,
+    })
+
     if (startBlock >= endBlock) {
       if (startBlock > endBlock) {
         this.log
@@ -274,9 +285,12 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
         nonce,
         gasPrice,
       })
-      this.log.info('Submitting appendSequencerBatch transaction', {
+      this.log.info('Submitted appendSequencerBatch transaction', {
         nonce,
         txHash: tx.hash,
+        contractAddr: this.chainContract.address,
+        from: tx.from,
+        data: tx.data,
       })
       return this.signer.provider.waitForTransaction(
         tx.hash,
@@ -335,6 +349,12 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       //  In this case, we want to submit regardless of the batch's size.
       wasBatchTruncated = true
     }
+
+    this.log.info('Generated sequencer batch params', {
+      contexts: sequencerBatchParams.contexts,
+      transactions: sequencerBatchParams.transactions,
+      wasBatchTruncated,
+    })
     return [sequencerBatchParams, wasBatchTruncated]
   }
 
@@ -607,7 +627,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
       blockNumber > queueElement.blockNumber
     ) {
       this.log.warn(
-        'Double deposit detected!!! Fixing by skipping the deposit & replacing with a dummy tx.',
+        'Double deposit detected. Fixing by skipping the deposit & replacing with a dummy tx.',
         {
           timestamp,
           blockNumber,

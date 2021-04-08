@@ -112,9 +112,17 @@ export class StateBatchSubmitter extends BatchSubmitter {
     // TODO: Remove BLOCK_OFFSET by adding a tx to Geth's genesis
     const startBlock: number =
       (await this.chainContract.getTotalElements()).toNumber() + BLOCK_OFFSET
+    this.log.info('Retrieved start block number from SCC', {
+      startBlock,
+    })
+
     // We will submit state roots for txs which have been in the tx chain for a while.
     const totalElements: number =
       (await this.ctcContract.getTotalElements()).toNumber() + BLOCK_OFFSET
+    this.log.info('Retrieved total elements from CTC', {
+      totalElements,
+    })
+
     const endBlock: number = Math.min(
       startBlock + this.maxBatchSize,
       totalElements
@@ -166,9 +174,12 @@ export class StateBatchSubmitter extends BatchSubmitter {
         offsetStartsAtIndex,
         { nonce, gasPrice }
       )
-      this.log.info('Submitting appendStateBatch transaction', {
+      this.log.info('Submitted appendStateBatch transaction', {
         nonce,
         txHash: contractTx.hash,
+        contractAddr: this.chainContract.address,
+        from: contractTx.from,
+        data: contractTx.data,
       })
       return this.signer.provider.waitForTransaction(
         contractTx.hash,
@@ -212,8 +223,7 @@ export class StateBatchSubmitter extends BatchSubmitter {
       'appendStateBatch',
       [batch, startBlock]
     )
-    tx = remove0x(tx)
-    while (tx.length / 2 > this.maxTxSize) {
+    while (remove0x(tx).length / 2 > this.maxTxSize) {
       batch.splice(Math.ceil((batch.length * 2) / 3)) // Delete 1/3rd of all of the batch elements
       this.log.debug('Splicing batch...', {
         batchSizeInBytes: tx.length / 2,
@@ -224,6 +234,9 @@ export class StateBatchSubmitter extends BatchSubmitter {
       ])
     }
 
+    this.log.info('Generated state commitment batch', {
+      batch, // list of stateRoots
+    })
     return batch
   }
 }
