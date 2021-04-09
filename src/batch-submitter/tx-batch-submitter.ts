@@ -253,7 +253,7 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
     )
     if (gasPriceInGwei > this.gasThresholdInGwei) {
       this.log.warn(
-        'Gas price is higher than gras price threshold; aborting batch submission',
+        'Gas price is higher than gas price threshold; aborting batch submission',
         {
           gasPriceInGwei,
           gasThresholdInGwei: this.gasThresholdInGwei,
