@@ -208,6 +208,9 @@ export class TransactionBatchSubmitter extends BatchSubmitter {
   }
 
   public async _getBatchStartAndEnd(): Promise<Range> {
+    this.log.info(
+      'Getting batch start and end for transaction batch submitter...'
+    )
     // TODO: Remove BLOCK_OFFSET by adding a tx to Geth's genesis
     const startBlock =
       (await this.chainContract.getTotalElements()).toNumber() + BLOCK_OFFSET
