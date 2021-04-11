@@ -1,3 +1,5 @@
+**[DEPRECATED]** This repository is now deprecated in favour of the new development [monorepo](https://github.com/ethereum-optimism/optimism-monorepo).
+
 # Batch Submitter
 
 Contains an executable batch submitter service which watches L1 and a local L2 node and submits batches to the
